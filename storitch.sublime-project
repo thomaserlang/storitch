@@ -1,0 +1,30 @@
+{
+    "build_systems":
+    [
+        {
+            "cmd":
+            [
+                "c:/virtualenv/storitch/scripts/python",
+                "${file}"
+            ],
+            "env":
+            {
+                "PYTHONPATH": "C:/Users/te/Dropbox/Python/storitch/src"
+            },
+            "file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
+            "name": "stortich-main",
+            "selector": "source.python"
+        },
+    ],
+    "folders":
+    [
+        {
+            "follow_symlinks": true,
+            "path": ".",
+            "folder_exclude_patterns": [
+                "__pycache__",
+                ".idea"
+            ]
+        }
+    ]
+}

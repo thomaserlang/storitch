@@ -1,4 +1,4 @@
-storitch
+Storitch
 ========
 
-Simple file storage and thumbnail generation system
+Simple file storage system
