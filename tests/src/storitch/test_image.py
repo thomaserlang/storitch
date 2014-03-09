@@ -7,11 +7,12 @@ from wand import image
 class test_image(unittest.TestCase):
 
     def test_thumbnail(self):
+        path = os.path.dirname(os.path.realpath(__file__))
         self.assertFalse(
-            Image.thumbnail('1b4f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567014')
+            Image.thumbnail(path+'/1b4f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567014')
         )
 
-        thumbnail = '1b4f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567014@SX80.png'
+        thumbnail = path+'/1b4f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567014@SX80.png'
         self.assertTrue(
             Image.thumbnail(thumbnail)
         )
@@ -23,7 +24,7 @@ class test_image(unittest.TestCase):
             if os.path.exists(thumbnail):
                 os.remove(thumbnail)
         try:
-            thumbnail = '1b4f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567014@SY123.png'
+            thumbnail = path+'./1b4f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567014@SY123.png'
             self.assertTrue(
                 Image.thumbnail(thumbnail)
             )
