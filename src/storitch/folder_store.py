@@ -64,4 +64,7 @@ class Folder_store(object):
 
     @classmethod
     def get(cls, hash_):
-        pass
+        return os.path.join(
+            path_from_hash(hash_),
+            hash_,
+        )

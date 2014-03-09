@@ -1,5 +1,4 @@
 import unittest
-import builtins
 from mock import patch, mock_open, Mock
 from storitch.folder_store import path_from_hash, Folder_store
 

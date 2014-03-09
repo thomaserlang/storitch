@@ -38,3 +38,8 @@ def store_files():
             })
 
     return json.dumps(stored_files)
+
+@app.route('/<hash_>', methods=['GET'])
+def get_file(hash_):
+    pass
+
