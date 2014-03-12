@@ -17,7 +17,7 @@ class Image(object):
         Arguments can be specified as followed:
 
             SXx         - Width, keeps aspect ratio
-            SY7x        - Height, keeps aspect ration. 
+            SYx        - Height, keeps aspect ration. 
                           Ignored if SX is specified.
             ROTATEx     - Number of degrees you wise to 
                           rotate the image. Supports 
@@ -50,7 +50,6 @@ class Image(object):
             'filename': p[0]
         }
         if resolution_match:
-            # resolution
             if resolution_match.group(1) != None:
                 o['resolution'] = int(resolution_match.group(1))
         if page_match:

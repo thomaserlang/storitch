@@ -7,34 +7,24 @@ from wand import image
 class test_image(unittest.TestCase):
 
     def test_thumbnail(self):
-        path = os.path.dirname(os.path.realpath(__file__))
+        m = Mock
+        img = Mock()
+        m.__enter__ = Mock(return_value=img)
+        m.__exit__ = Mock(return_value=False)
+
         self.assertFalse(
-            Image.thumbnail(path+'/1b4f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567014')
+            Image.thumbnail('1b4f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567014')
         )
 
-        # test the resize of a image
-        thumbnail = path+'/1b4f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567014@SX80.png'
-        self.assertTrue(
-            Image.thumbnail(thumbnail)
-        )
-        try:
-            with image.Image(filename=thumbnail) as im:
-                w, h = im.size
-                self.assertEqual(w, 80)                 
-        finally:
-            if os.path.exists(thumbnail):
-                os.remove(thumbnail)
-        try:
-            thumbnail = path+'./1b4f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567014@SY123_ROTATE180.png'
-            self.assertTrue(
-                Image.thumbnail(thumbnail)
-            )
-            with image.Image(filename=thumbnail) as im:
-                w, h = im.size
-                self.assertEqual(h, 123)     
-        finally:
-            if os.path.exists(thumbnail):
-                os.remove(thumbnail)
+        with patch('wand.image.Image', m, create=True):
+            Image.thumbnail('1b4f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567014@SY123_ROTATE180.png')
+            img.transform.assert_called_with(resize='x123')
+            img.rotate.assert_called_with(180)
+
+        with patch('wand.image.Image', m, create=True):
+            Image.thumbnail('1b4f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567014@SX200_ROTATE-180.png')
+            img.transform.assert_called_with(resize='200')
+            img.rotate.assert_called_with(-180)
 
 if __name__ == '__main__':
     unittest.main()
