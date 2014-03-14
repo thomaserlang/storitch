@@ -1,7 +1,10 @@
-from flask import Flask, request
+from flask import Flask, request, send_file
 from storitch import folder_store
+from storitch.image import Image
+#coding=utf-8 
 import hashlib
 import json
+import os
 
 app = Flask(__name__)
 
@@ -41,5 +44,15 @@ def store_files():
 
 @app.route('/<hash_>', methods=['GET'])
 def get_file(hash_):
-    pass
+    path = app.config['STORE_ENGINE'].get(
+        path=app.config['STORE_PATH'],
+        hash_=hash_
+    )
+    if os.path.exists(path):
+        return send_file(path)
+    else:
+        if Image.thumbnail(path):
+            return send_file(path)
+    return 'Not found', 404
+
 

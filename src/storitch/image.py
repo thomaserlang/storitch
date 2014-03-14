@@ -1,5 +1,6 @@
-import imghdr
+#coding=utf-8 
 import re
+import os
 from wand import image
 
 class Image(object):
@@ -37,14 +38,15 @@ class Image(object):
 
             /foo/14bc...@SX1024_ROTATE90.png
 
-        Resizes the image to a width of 1024,
-        rotates it 90 degrees and converts it
-        to a png file.
+        Resizes the image to a width of 1024, rotates it 90 degrees and converts 
+        it to a png file.
 
         '''
         p = path.split('@')
         if len(p) != 2:
             return False
+        if os.path.exists(path):
+            return True
         size_match, rotate_match, resolution_match, page_match = cls.__parse_arguments(p[1])
         o = {
             'filename': p[0]

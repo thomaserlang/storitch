@@ -1,3 +1,4 @@
+#coding=utf-8 
 import os
 from datetime import datetime
 
@@ -34,10 +35,10 @@ def path_from_hash(hash_, levels=2, length=2):
 
             /1b/4f
     '''
-    path = ''
+    path = []
     for i in range(0, levels):
-        path += '/'+hash_[i*length:(i*length)+length]
-    return path
+        path.append(hash_[i*length:(i*length)+length])
+    return '/'.join(path)
 
 class Folder_store(object):
 
@@ -46,14 +47,14 @@ class Folder_store(object):
         '''
 
         '''
-        path = os.path.join(
-            os.path.normpath(path),
+        path = os.path.normpath(os.path.join(
+            path,
             path_from_hash(
                 hash_,
                 levels=2,
                 length=2,
             ),
-        )
+        ))
         if not os.path.exists(path):
             os.makedirs(path)
         path = os.path.join(path, hash_)
@@ -63,8 +64,9 @@ class Folder_store(object):
         return True
 
     @classmethod
-    def get(cls, hash_):
-        return os.path.join(
+    def get(cls, path, hash_):
+        return os.path.normpath(os.path.join(
+            path,
             path_from_hash(hash_),
             hash_,
-        )
+        ))

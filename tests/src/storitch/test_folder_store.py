@@ -1,4 +1,7 @@
+#coding=utf-8 
 import unittest
+import io
+import os
 from mock import patch, mock_open, Mock
 from storitch.folder_store import path_from_hash, Folder_store
 
@@ -13,7 +16,7 @@ class test_path_from_hash(unittest.TestCase):
             length=2,
         )
         self.assertEqual(
-            '/1b',
+            '1b',
             path,
         )
 
@@ -23,7 +26,7 @@ class test_path_from_hash(unittest.TestCase):
             length=2,
         )
         self.assertEqual(
-            '/1b/4f',
+            '1b/4f',
             path,
         )
 
@@ -33,7 +36,7 @@ class test_path_from_hash(unittest.TestCase):
             length=3,
         )
         self.assertEqual(
-            '/1b4/f0e/985',
+            '1b4/f0e/985',
             path,
         )
 
@@ -41,17 +44,30 @@ class test_folder_store(unittest.TestCase):
 
     @patch('os.makedirs', Mock(return_value=True))
     def test_store(self):
-        uploaded_file = mock_open(read_data='test1')
+        # test store
+        uploaded_file = io.BytesIO(b'test1')
         store_file = mock_open()
-        with patch('{}.open'.format(__name__), uploaded_file, create=True):
-            with open('foo', 'wb') as f:
-                with patch('storitch.folder_store.open', store_file, create=True):
-                    Folder_store.store(
-                        path='',
-                        stream=f,
-                        hash_='1b4f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567014',
-                    )
-                    store_file().write.assert_called_once_with('test1')
+        with patch('storitch.folder_store.open', store_file, create=True):
+            Folder_store.store(
+                path='/test_folder',
+                stream=uploaded_file,
+                hash_='1b4f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567014',
+            )
+            store_file.assert_called_once_with(
+                os.path.normpath('/test_folder/1b/4f/1b4f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567014'), 
+                'wb'
+            )
+            store_file().write.assert_called_once_with(b'test1')
+
+    def test_get(self):
+        # test get
+        self.assertEqual(
+            Folder_store.get(
+                path='/test_folder',
+                hash_='1b4f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567014',
+            ),
+            os.path.normpath('/test_folder/1b/4f/1b4f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567014'),
+        )
 
 if __name__ == '__main__':
     unittest.main()

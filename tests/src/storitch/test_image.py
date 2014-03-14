@@ -1,8 +1,8 @@
+#coding=utf-8 
 import unittest
 import os
-from mock import patch, mock_open, Mock
+from mock import patch, Mock
 from storitch.image import Image
-from wand import image
 
 class test_image(unittest.TestCase):
 
