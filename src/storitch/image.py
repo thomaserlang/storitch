@@ -39,8 +39,9 @@ class Image(object):
             /foo/14bc...@SX1024_ROTATE90.png
 
         Resizes the image to a width of 1024, rotates it 90 degrees and converts 
-        it to a png file.
+        it to a PNG file.
 
+        :param path: str
         '''
         p = path.split('@')
         if len(p) != 2:

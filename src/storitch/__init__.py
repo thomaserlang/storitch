@@ -59,6 +59,5 @@ def get_file(hash_):
     return 'Not found', 404
 
 if __name__ == '__main__':
-    app.debug = True
     app.run()
 
