@@ -1,4 +1,4 @@
-from flask import Flask, request, send_file
+from flask import Flask, request, send_file, redirect
 from storitch import folder_store
 from storitch.image import Image
 #coding=utf-8 
@@ -49,10 +49,16 @@ def get_file(hash_):
         hash_=hash_
     )
     if os.path.exists(path):
-        return send_file(path)
+        if app.debug:
+            return send_file(path)
     else:
         if Image.thumbnail(path):
-            return send_file(path)
+            if app.debug:
+                return send_file(path)
+            return redirect('/{}'.format(hash_))
     return 'Not found', 404
 
+if __name__ == '__main__':
+    app.debug = True
+    app.run()
 

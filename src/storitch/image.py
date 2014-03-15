@@ -47,7 +47,7 @@ class Image(object):
             return False
         if os.path.exists(path):
             return True
-        size_match, rotate_match, resolution_match, page_match = cls.__parse_arguments(p[1])
+        size_match, rotate_match, resolution_match, page_match, format_match = cls.__parse_arguments(p[1])
         o = {
             'filename': p[0]
         }
@@ -68,6 +68,8 @@ class Image(object):
             if rotate_match:
                 if rotate_match.group(1) != None:
                     img.rotate(int(rotate_match.group(1)))
+            if format_match:
+                img.format = format_match.group(1)
             img.save(filename=path)
         return True
 
@@ -82,6 +84,7 @@ class Image(object):
                 rotate_match,
                 resolution_match,
                 page_match,
+                format_match
             )
         '''
         size_match = re.search(
@@ -104,9 +107,15 @@ class Image(object):
             arguments,
             re.I
         )
+        format_match = re.search(
+            '.([a-z]{2,5})',
+            arguments,
+            re.I
+        )
         return (
             size_match,
             rotate_match,
             resolution_match,
             page_match,
+            format_match,
         )
