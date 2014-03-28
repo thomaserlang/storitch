@@ -1,15 +1,19 @@
-from flask import Flask, request, send_file, redirect
-from storitch import folder_store
-from storitch.image import Image
 #coding=utf-8 
 import hashlib
 import json
 import os
+from flask import Flask, request, send_file, redirect
+from storitch import folder_store
+from storitch.image import Image
+from storitch.config import Config
 
 app = Flask(__name__)
-
-app.config['STORE_ENGINE'] = folder_store.Folder_store
-app.config['STORE_PATH'] = 'c:/store'
+app.config.update({
+    'STORE_PATH': None,
+    'STORE_ENGINE': folder_store.Folder_store,
+    'ENABLE_THUMBNAIL': True,
+})
+app.config.from_envvar('STORITCH_CONFIG', silent=True)
 
 def sha256_stream(stream):
     h = hashlib.sha256()

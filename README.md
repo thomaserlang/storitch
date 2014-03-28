@@ -46,7 +46,7 @@ it to a PNG file.
 
 # Nginx
 
-Uses nginx to serve all the cached files.
+Use Nginx to serve all the files.
 
 Here is an example config.
 
