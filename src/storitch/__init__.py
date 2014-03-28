@@ -5,7 +5,6 @@ import os
 from flask import Flask, request, send_file, redirect
 from storitch import folder_store
 from storitch.image import Image
-from storitch.config import Config
 
 app = Flask(__name__)
 app.config.update({

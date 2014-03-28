@@ -19,10 +19,10 @@ setup(
     install_requires=install_requires,
     license=None,
     include_package_data=True,
-    entry_points={
-        'console_scripts': [
-            'storitch = storitch.app:main',
-        ],
-    },
+    #entry_points={
+    #    'console_scripts': [
+    #        'storitch = storitch.app:main',
+    #    ],
+    #},
     classifiers=[],
 )
