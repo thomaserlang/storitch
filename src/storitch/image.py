@@ -109,7 +109,7 @@ class Image(object):
             re.I
         )
         format_match = re.search(
-            '.([a-z]{2,5})',
+            '\.([a-z]{2,5})',
             arguments,
             re.I
         )
