@@ -53,7 +53,7 @@ Create a user with no login right.
 Install Storitch.
 
 ```
-sudo apt-get install python-virtualenv python-dev supervisor
+sudo apt-get install python-virtualenv python-dev supervisor nginx
 virtualenv /virtualenv/storitch
 source /virtualenv/storitch/bin/activate
 pip install https://github.com/thomaserlang/storitch/archive/master.zip
@@ -100,9 +100,7 @@ Get supervisor to load the new configuration.
     sudo supervisorctl reread
     sudo supervisorctl reload
 
-# Nginx
-
-Use Nginx to serve all the files.
+Setup Nginx to serve the files.
 
 Here is an example config.
 
@@ -117,21 +115,19 @@ events {
 http {
     include       mime.types;
     default_type  application/octet-stream;
-
     sendfile on;
     keepalive_timeout  65;
-
-
     tcp_nodelay on;
     gzip on;
     gzip_disable "MSIE [1-6]\.(?!.*SV1)";
 
     upstream storitch {
-        server localhost:5000;
+        server localhost:4000;
     }
 
     server {
         listen 80;
+        client_max_body_size 20M;
 
         location ~ /store {
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -139,15 +135,9 @@ http {
             proxy_redirect off;
             proxy_pass http://storitch;
         }
-        location ~ /upload { # backwards compatible
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header Host $http_host;
-            proxy_redirect off;
-            proxy_pass http://storitch;
-        }
 
         location ~ "/([a-z0-9]{2})([a-z0-9]{2})(.*)$" {
-            root /data;
+            root /var/storitch;
             try_files /$1/$2/$1$2$3 $1$2$3 @storitch;
         }
         location @storitch {
@@ -157,6 +147,5 @@ http {
             proxy_pass http://storitch;
         }
     }
-
 }
 ```
