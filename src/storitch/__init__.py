@@ -3,6 +3,7 @@ import hashlib
 import json
 import os
 from flask import Flask, request, send_file, redirect
+from logging.handlers import RotatingFileHandler
 from storitch import folder_store
 from storitch.image import Image
 
@@ -11,8 +12,15 @@ app.config.update({
     'STORE_PATH': None,
     'STORE_ENGINE': folder_store.Folder_store,
     'ENABLE_THUMBNAIL': True,
+    'LOG_PATH': None,
 })
-app.config.from_envvar('STORITCH_CONFIG', silent=True)
+
+app.config.from_envvar('STORITCH_CONFIG')
+
+if app.config['LOG_PATH']:
+    handler = RotatingFileHandler(app.config['LOG_PATH'], maxBytes=10000, backupCount=1)
+    handler.setLevel(logging.INFO)
+    app.logger.addHandler(handler)
 
 def sha256_stream(stream):
     h = hashlib.sha256()
