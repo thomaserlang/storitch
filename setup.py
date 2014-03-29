@@ -7,7 +7,7 @@ with open('requirements.txt') as f:
 
 setup(
     name='Storitch',
-    version='0.0.5',
+    version='0.0.6',
     author='Thomas Erlang',
     author_email='thomas@erlang.dk',
     url='https://github.com/thomaserlang/storitch',
@@ -19,10 +19,10 @@ setup(
     install_requires=install_requires,
     license=None,
     include_package_data=True,
-    #entry_points={
-    #    'console_scripts': [
-    #        'storitch = storitch:app',
-    #    ],
-    #},
+    entry_points={
+        'console_scripts': [
+            'storitch = storitch',
+        ],
+    },
     classifiers=[],
 )
