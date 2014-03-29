@@ -2,6 +2,7 @@
 import hashlib
 import json
 import os
+import logging
 from flask import Flask, request, send_file, redirect
 from logging.handlers import RotatingFileHandler
 from storitch import folder_store
@@ -15,7 +16,7 @@ app.config.update({
     'LOG_PATH': None,
 })
 
-app.config.from_envvar('STORITCH_CONFIG')
+app.config.from_envvar('STORITCH_CONFIG', silent=True)
 
 if app.config['LOG_PATH']:
     handler = RotatingFileHandler(app.config['LOG_PATH'], maxBytes=10000, backupCount=1)
