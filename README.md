@@ -53,10 +53,10 @@ Create a user with no login right.
 Install Storitch.
 
 ```
-    sudo apt-get install python-virtualenv python-dev supervisor
-    virtualenv /virtualenv/storitch
-    source /virtualenv/storitch/bin/activate
-    pip install https://github.com/thomaserlang/storitch/archive/master.zip
+sudo apt-get install python-virtualenv python-dev supervisor
+virtualenv /virtualenv/storitch
+source /virtualenv/storitch/bin/activate
+pip install https://github.com/thomaserlang/storitch/archive/master.zip
 ```
 
 Create a config for Storitch.
@@ -66,8 +66,8 @@ Create a config for Storitch.
 Insert the following:
 
 ```
-    STORE_PATH = '/var/storitch'
-    LOG_PATH = '/var/log/storitch/storitch.log'
+STORE_PATH = '/var/storitch'
+LOG_PATH = '/var/log/storitch/storitch.log'
 ```
 
 Configure supervisor to run Storitch.
@@ -77,22 +77,22 @@ Configure supervisor to run Storitch.
 Insert the following:
 
 ```
-    [program:storitch]
-    command=/virtualenv/storitch/bin/gunicorn -w 4 -b 127.0.0.1:4000 storitch:app
-    environment=PYTHONPATH="/virtualenv/storitch",STORITCH_CONFIG="/etc/storitch_config.py"
-    user=storitch
-    stdout_logfile=/var/log/storitch/supervisor.log
-    stderr_logfile=/var/log/storitch/supervisor_error.log
+[program:storitch]
+command=/virtualenv/storitch/bin/gunicorn -w 4 -b 127.0.0.1:4000 storitch:app
+environment=PYTHONPATH="/virtualenv/storitch",STORITCH_CONFIG="/etc/storitch_config.py"
+user=storitch
+stdout_logfile=/var/log/storitch/supervisor.log
+stderr_logfile=/var/log/storitch/supervisor_error.log
 ```
 
 Create the log directory and folder to store the documents in.
     
 ```
-    sudo mkdir /var/log/storitch
-    sudo chown storitch:storitch /var/log/storitch
+sudo mkdir /var/log/storitch
+sudo chown storitch:storitch /var/log/storitch
 
-    sudo mkdir /var/storitch
-    sudo chown storitch:storitch /var/storitch
+sudo mkdir /var/storitch
+sudo chown storitch:storitch /var/storitch
 ```
 
 Get supervisor to load the new configuration.
