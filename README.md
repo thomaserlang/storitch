@@ -63,8 +63,8 @@ Create a config for Storitch.
 
 ```
 sudo nano /etc/storitch_config.py
-sudo chown storitch:storitch /var/log/storitch
 sudo chown root:storitch /etc/storitch_config.py
+sudo chmod 750 /etc/storitch_config.py
 ```
 
 Insert the following:
