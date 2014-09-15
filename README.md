@@ -53,7 +53,7 @@ Create a user with no login right.
 Install Storitch.
 
 ```
-sudo apt-get install python-virtualenv python-dev supervisor nginx
+sudo apt-get install python-virtualenv python-dev supervisor nginx libmagickwand-dev
 virtualenv /virtualenv/storitch
 source /virtualenv/storitch/bin/activate
 pip install https://github.com/thomaserlang/storitch/archive/master.zip
@@ -127,7 +127,7 @@ http {
 
     server {
         listen 80;
-        client_max_body_size 20M;
+        client_max_body_size 100M;
 
         location ~ /store {
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
