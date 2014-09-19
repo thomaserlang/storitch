@@ -61,13 +61,13 @@ def get_file(hash_):
         hash_=hash_
     )
     if os.path.exists(path):
-        #if app.debug:
-        return send_file(path)
+        if app.debug:
+            return send_file(path)
     else:
         if Image.thumbnail(path):
-            #if app.debug:
-            return send_file(path)
-            #return redirect('/{}'.format(hash_))
+            if app.debug:
+                return send_file(path)
+            return redirect(request.url)
     return 'Not found', 404
 
 if __name__ == '__main__':
