@@ -56,11 +56,12 @@ class Folder_store(object):
             ),
         ))
         if not os.path.exists(path):
-            os.makedirs(path)
+            os.makedirs(path, mode=0755)
         path = os.path.join(path, hash_)
         if not os.path.exists(path):
             with open(path, 'wb') as f:
                 f.write(stream.read())
+            os.chmod(path, 0755)
         return True
 
     @classmethod
