@@ -65,9 +65,7 @@ def get_file(hash_):
             return send_file(path)
     else:
         if Image.thumbnail(path):
-            if app.debug:
-                return send_file(path)
-            return redirect(request.url)
+            return send_file(path)
     return 'Not found', 404
 
 if __name__ == '__main__':
