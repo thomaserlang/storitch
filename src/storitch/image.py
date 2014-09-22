@@ -2,6 +2,7 @@
 import re
 import os
 from wand import image
+from wand import exceptions
 
 class Image(object):
 
@@ -120,3 +121,15 @@ class Image(object):
             page_match,
             format_match,
         )
+
+    @classmethod
+    def info(cls, file_):
+        file_.seek(0)
+        try:
+            with image.Image(file=file_) as img:
+                return {
+                    'width': img.width,
+                    'height': img.height,
+                }
+        except (ValueError, exceptions.MissingDelegateError):
+            return None

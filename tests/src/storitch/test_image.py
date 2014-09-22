@@ -27,5 +27,13 @@ class test_image(unittest.TestCase):
             img.rotate.assert_called_with(-180)
             self.assertEqual(img.format, 'png')
 
+    def test_info(self):
+        with open('image1.png') as f:
+            info = Image.info(f)
+            self.assertEqual(info, {
+                'width': 220,
+                'height': 163,
+            })
+
 if __name__ == '__main__':
     unittest.main()

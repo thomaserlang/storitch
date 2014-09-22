@@ -10,7 +10,7 @@ from storitch.image import Image
 
 app = Flask(__name__)
 app.config.update({
-    'STORE_PATH': None,
+    'STORE_PATH': '/home/te/storitch',
     'STORE_ENGINE': folder_store.Folder_store,
     'ENABLE_THUMBNAIL': True,
     'LOG_PATH': None,
@@ -47,11 +47,16 @@ def store_files():
                 stream=file_.stream,
                 hash_=hash_,
             )
-            stored_files.append({
+            info = {
                 'hash': hash_,
                 'stored': stored,
-            })
-
+                'type': 'unknown',
+            }
+            image_info = Image.info(file_.stream) if app.config['ENABLE_THUMBNAIL'] else None
+            if image_info:
+                info.update(image_info)
+                info['type'] = 'image'
+            stored_files.append(info)
     return json.dumps(stored_files)
 
 @app.route('/<hash_>', methods=['GET'])
@@ -63,7 +68,7 @@ def get_file(hash_):
     if os.path.exists(path):
         if app.debug:
             return send_file(path)
-    else:
+    elif app.config['ENABLE_THUMBNAIL']:
         if Image.thumbnail(path):
             return send_file(path)
     return 'Not found', 404

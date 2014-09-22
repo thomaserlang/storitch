@@ -20,7 +20,7 @@ class test_main(unittest.TestCase):
 
 class test_app(test_main):
 
-    def test_app(self):
+    def test_text_file(self):
         data = {}
         response = self.app.post(
             '/store', 
@@ -35,8 +35,8 @@ class test_app(test_main):
         self.assertEqual(files, [{
             'hash': '1b4f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567014',
             'stored': True,
+            'type': 'unknown',
         }])
-
 
         # test get original file
         response = self.app.get(files[0]['hash'])
