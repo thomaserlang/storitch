@@ -28,7 +28,7 @@ class test_image(unittest.TestCase):
             self.assertEqual(img.format, 'png')
 
     def test_info(self):
-        with open('image1.png') as f:
+        with open(os.path.join(os.path.dirname(__file__), 'image1.png')) as f:
             info = Image.info(f)
             self.assertEqual(info, {
                 'width': 220,
