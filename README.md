@@ -21,7 +21,7 @@ and if it were stored or not.
 To retrieve the file you simply specify it's hash: `GET /<hash>`.
 
 If the file is an image you can resize, rotate and/or format it.
-Storitch uses imagemagick as the backend for this.
+Storitch uses imagemagick for this.
 
 Specify the hash and add a "@" followed by the arguments.
 
