@@ -7,6 +7,17 @@ Storitch is simple.
 You upload the file to `POST /store` and Storitch returns the file's hash 
 and if it were stored or not.
 
+```js
+{
+    "hash": "as213..af",
+    "stored": true,
+    "type": "image",
+    "width": 200,
+    "height": 250
+}
+```
+
+
 To retrieve the file you simply specify it's hash: `GET /<hash>`.
 
 If the file is an image you can resize, rotate and/or format it.
@@ -42,7 +53,7 @@ Example:
     GET /14bc...@SX1024_ROTATE90.png
 
 Resizes the image to a width of 1024, rotates it 90 degrees and converts 
-it to a PNG file.
+it to an PNG file.
 
 # Installation
 
