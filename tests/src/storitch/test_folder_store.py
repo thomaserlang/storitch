@@ -43,6 +43,7 @@ class test_path_from_hash(unittest.TestCase):
 class test_folder_store(unittest.TestCase):
 
     @patch('os.makedirs', Mock(return_value=True))
+    @patch('os.chmod', Mock(return_value=True))
     def test_store(self):
         # test store
         uploaded_file = io.BytesIO(b'test1')
