@@ -65,6 +65,7 @@ Install Storitch.
 
 ```
 sudo apt-get install python-virtualenv python-dev supervisor nginx libmagickwand-dev
+mkdir /virtualenv
 virtualenv /virtualenv/storitch
 source /virtualenv/storitch/bin/activate
 pip install https://github.com/thomaserlang/storitch/archive/master.zip
@@ -73,9 +74,10 @@ pip install https://github.com/thomaserlang/storitch/archive/master.zip
 Create a config for Storitch.
 
 ```
-sudo nano /etc/storitch_config.py
+sudo touch /etc/storitch_config.py
 sudo chown root:storitch /etc/storitch_config.py
 sudo chmod 750 /etc/storitch_config.py
+sudo nano /etc/storitch_config.py
 ```
 
 Insert the following:
