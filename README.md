@@ -59,7 +59,7 @@ it to an PNG file.
 
 Create a user with no login right.
 
-    sudo adduser --quiet --system --no-create-home --disabled-password --disabled-login --group storitch
+    sudo useradd -r storitch -s /bin/false
 
 Install Storitch.
 
