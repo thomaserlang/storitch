@@ -19,11 +19,12 @@ class Image(object):
         Arguments can be specified as followed:
 
             SXx         - Width, keeps aspect ratio
-            SYx        - Height, keeps aspect ration. 
+            SYx         - Height, keeps aspect ration. 
                           Ignored if SX is specified.
-            ROTATEx     - Number of degrees you wise to 
+            ROTATEx     - Number of degrees you want to 
                           rotate the image. Supports 
                           negative numbers.
+            CXxYx       - Crop the image from
 
         The file format can be specified by ending the path with
         E.g. .jpg, .png, .tiff, etc.
@@ -45,7 +46,7 @@ class Image(object):
             return False
         if os.path.exists(path):
             return True
-        size_match, rotate_match, format_match = cls.__parse_arguments(p[1])
+        size_match, rotate_match, crop_match, format_match = cls.__parse_arguments(p[1])
         o = {
             'filename': p[0]
         }
@@ -56,6 +57,8 @@ class Image(object):
                     img.transform(resize=size_match.group(1))
                 elif size_match.group(2) != None:# height
                     img.transform(resize='x'+size_match.group(2))
+            if crop_match:
+                img.crop(width=crop_match.group(1), height=crop_match.group(2), gravity='center')
             if rotate_match:
                 if rotate_match.group(1) != None:
                     img.rotate(int(rotate_match.group(1)))
@@ -73,6 +76,7 @@ class Image(object):
             (
                 size_match,
                 rotate_match,
+                crop_match,
                 format_match
             )
         '''
@@ -85,6 +89,11 @@ class Image(object):
             'ROTATE(-?\d+)',
             arguments,
             re.I
+        )        
+        crop_match = re.search(
+            'CX(\d+)Y(\d+)',
+            arguments,
+            re.I
         )
         format_match = re.search(
             '\.([a-z]{2,5})',
@@ -94,8 +103,7 @@ class Image(object):
         return (
             size_match,
             rotate_match,
-            resolution_match,
-            page_match,
+            crop_match,
             format_match,
         )
 
