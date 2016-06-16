@@ -58,7 +58,7 @@ class Image(object):
                 elif size_match.group(2) != None:# height
                     img.transform(resize='x'+size_match.group(2))
             if crop_match:
-                img.crop(width=crop_match.group(1), height=crop_match.group(2), gravity='center')
+                img.crop(width=int(crop_match.group(1)), height=int(crop_match.group(2)), gravity='center')
             if rotate_match:
                 if rotate_match.group(1) != None:
                     img.rotate(int(rotate_match.group(1)))
