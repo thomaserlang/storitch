@@ -24,10 +24,6 @@ class Image(object):
             ROTATEx     - Number of degrees you wise to 
                           rotate the image. Supports 
                           negative numbers.
-            RESx        - Resolution, used for PDF 
-                          files, the higher the number,
-                          the better the quality.
-            PAGEx       - Page index in the PDF document.
 
         The file format can be specified by ending the path with
         E.g. .jpg, .png, .tiff, etc.
@@ -49,17 +45,10 @@ class Image(object):
             return False
         if os.path.exists(path):
             return True
-        size_match, rotate_match, resolution_match, page_match, format_match = cls.__parse_arguments(p[1])
+        size_match, rotate_match, format_match = cls.__parse_arguments(p[1])
         o = {
             'filename': p[0]
         }
-        if resolution_match:
-            if resolution_match.group(1) != None:
-                o['resolution'] = int(resolution_match.group(1))
-        if page_match:
-            # a specific page in a PDF document
-            if page_match.group(1) != None:
-                path += '[{}]'.format(page_match.group(1))
         with image.Image(**o) as img:
             if size_match:
                 # resize, keep aspect ratio
@@ -84,8 +73,6 @@ class Image(object):
             (
                 size_match,
                 rotate_match,
-                resolution_match,
-                page_match,
                 format_match
             )
         '''
@@ -96,16 +83,6 @@ class Image(object):
         )
         rotate_match = re.search(
             'ROTATE(-?\d+)',
-            arguments,
-            re.I
-        )
-        resolution_match = re.search(
-            'RES(\d+)',
-            arguments,
-            re.I
-        )
-        page_match = re.search(
-            'PAGE(\d+)',
             arguments,
             re.I
         )
