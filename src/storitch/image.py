@@ -59,8 +59,8 @@ class Image(object):
                     img.transform(resize='x'+size_match.group(2))
             if size_match:
                 img.resize(
-                    width=int(crop_match.group(1)),
-                    height=int(crop_match.group(2)),
+                    width=int(size_match.group(1)),
+                    height=int(size_match.group(2)),
                 )
             if rotate_match:
                 if rotate_match.group(1) != None:
