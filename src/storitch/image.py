@@ -21,10 +21,10 @@ class Image(object):
             SXx         - Width, keeps aspect ratio
             SYx         - Height, keeps aspect ration. 
                           Ignored if SX is specified.
+            S[X]x[Y]    - Specific size.
             ROTATEx     - Number of degrees you want to 
                           rotate the image. Supports 
                           negative numbers.
-            CXxYx       - Crop the image from
 
         The file format can be specified by ending the path with
         E.g. .jpg, .png, .tiff, etc.
@@ -46,19 +46,22 @@ class Image(object):
             return False
         if os.path.exists(path):
             return True
-        size_match, rotate_match, crop_match, format_match = cls.__parse_arguments(p[1])
+        aspect_size_match, rotate_match, size_match, format_match = cls.__parse_arguments(p[1])
         o = {
             'filename': p[0]
         }
         with image.Image(**o) as img:
-            if size_match:
+            if aspect_size_match:
                 # resize, keep aspect ratio
-                if size_match.group(1) != None:# width
-                    img.transform(resize=size_match.group(1))
+                if aspect_size_match.group(1) != None:# width
+                    img.transform(resize=aspect_size_match.group(1))
                 elif size_match.group(2) != None:# height
                     img.transform(resize='x'+size_match.group(2))
-            if crop_match:
-                img.crop(width=int(crop_match.group(1)), height=int(crop_match.group(2)), gravity='center')
+            if size_match:
+                img.resize(
+                    width=int(crop_match.group(1)),
+                    height=int(crop_match.group(2)),
+                )
             if rotate_match:
                 if rotate_match.group(1) != None:
                     img.rotate(int(rotate_match.group(1)))
@@ -74,13 +77,13 @@ class Image(object):
         :param arguments: str
         :returns: tuple
             (
-                size_match,
+                aspect_size_match,
                 rotate_match,
-                crop_match,
+                size_match,
                 format_match
             )
         '''
-        size_match = re.search(
+        aspect_size_match = re.search(
             'SX(\d+)|SY(\d+)',
             arguments,
             re.I
@@ -90,8 +93,8 @@ class Image(object):
             arguments,
             re.I
         )        
-        crop_match = re.search(
-            'CX(\d+)Y(\d+)',
+        size_match = re.search(
+            'S(\d+)X(\d+)',
             arguments,
             re.I
         )
@@ -101,9 +104,9 @@ class Image(object):
             re.I
         )
         return (
-            size_match,
+            aspect_size_match,
             rotate_match,
-            crop_match,
+            size_match,
             format_match,
         )
 
