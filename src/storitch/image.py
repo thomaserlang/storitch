@@ -123,7 +123,13 @@ class Image(object):
         )
 
     @classmethod
-    def info(cls, file_):
+    def info(cls, file_, filename, image_formats):
+        d = os.path.splitext(filename)
+        if len(d) != 2:
+            return
+        ext = d[1]
+        if ext.lower() not in image_formats:
+            return
         file_.seek(0)
         try:
             with image.Image(file=file_) as img:

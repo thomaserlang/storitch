@@ -13,6 +13,10 @@ app.config.update({
     'STORE_PATH': '/home/te/storitch',
     'STORE_ENGINE': folder_store.Folder_store,
     'ENABLE_THUMBNAIL': True,
+    'IMAGE_FORMATS': (
+        '.jpg', '.jpeg', '.png', '.tiff', '.tif', '.gif',
+        '.bmp', '.bmp2', '.bmp3' '.dcm','.dicom', 'webp',
+    ),
     'LOG_PATH': None,
 })
 
@@ -52,7 +56,8 @@ def store_files():
                 'stored': stored,
                 'type': 'unknown',
             }
-            image_info = Image.info(file_.stream) if app.config['ENABLE_THUMBNAIL'] else None
+            image_info = Image.info(file_, file_.filename, app.config['IMAGE_FORMATS']) \
+                if app.config['ENABLE_THUMBNAIL'] else None
             if image_info:
                 info.update(image_info)
                 info['type'] = 'image'

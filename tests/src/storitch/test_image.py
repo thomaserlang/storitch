@@ -4,6 +4,7 @@ import os
 from mock import patch, Mock
 from storitch.image import Image
 
+
 class test_image(unittest.TestCase):
 
     def test_thumbnail(self):
@@ -28,8 +29,8 @@ class test_image(unittest.TestCase):
             self.assertEqual(img.format, 'png')
 
     def test_info(self):
-        with open(os.path.join(os.path.dirname(__file__), 'image1.png')) as f:
-            info = Image.info(f)
+        with open(os.path.join(os.path.dirname(__file__), 'image1.png'), 'rb') as f:
+            info = Image.info(f, f.name, ['.png'])
             self.assertEqual(info, {
                 'width': 220,
                 'height': 163,
