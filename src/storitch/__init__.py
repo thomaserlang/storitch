@@ -15,7 +15,7 @@ app.config.update({
     'ENABLE_THUMBNAIL': True,
     'IMAGE_FORMATS': (
         '.jpg', '.jpeg', '.png', '.tiff', '.tif', '.gif',
-        '.bmp', '.bmp2', '.bmp3' '.dcm','.dicom', 'webp',
+        '.bmp', '.bmp2', '.bmp3' '.dcm','.dicom', '.webp',
     ),
     'LOG_PATH': None,
 })
