@@ -1,7 +1,7 @@
 #coding=utf-8 
 import unittest
 import os
-from mock import patch, Mock
+from unittest.mock import patch, Mock
 from storitch.image import Image
 
 

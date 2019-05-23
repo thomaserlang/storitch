@@ -5,7 +5,7 @@
 # Start:
 # docker start storitch
 
-FROM python:2-slim
+FROM python:3-slim
 
 RUN apt-get update --fix-missing && apt-get install supervisor nginx libmagickwand-dev -y
 

@@ -18,6 +18,7 @@ app.config.update({
         '.bmp', '.bmp2', '.bmp3' '.dcm','.dicom', '.webp',
     ),
     'LOG_PATH': None,
+    'MAX_CONTENT_LENGTH': 10000000000, #10 GB
 })
 
 app.config.from_envvar('STORITCH_CONFIG', silent=True)
@@ -46,15 +47,17 @@ def store_files():
         for file_ in request.files.getlist(files):
             hash_ = sha256_stream(file_.stream)
             file_.stream.seek(0)
-            stored = app.config['STORE_ENGINE'].store(
+            path = app.config['STORE_ENGINE'].store(
                 path=app.config['STORE_PATH'],
-                stream=file_.stream,
+                file=file_.stream,
                 hash_=hash_,
             )
             info = {
                 'hash': hash_,
-                'stored': stored,
+                'stored': path != None,
                 'type': 'unknown',
+                'filename': file_.filename,
+                'filesize': os.stat(path).st_size
             }
             image_info = Image.info(file_, file_.filename, app.config['IMAGE_FORMATS']) \
                 if app.config['ENABLE_THUMBNAIL'] else None

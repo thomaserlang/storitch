@@ -43,7 +43,7 @@ def path_from_hash(hash_, levels=2, length=2):
 class Folder_store(object):
 
     @classmethod
-    def store(cls, path, stream, hash_):
+    def store(cls, path, file, hash_):
         '''
 
         '''
@@ -56,13 +56,12 @@ class Folder_store(object):
             ),
         ))
         if not os.path.exists(path):
-            os.makedirs(path, mode=0755)
+            os.makedirs(path, mode=0o755)
         path = os.path.join(path, hash_)
         if not os.path.exists(path):
-            with open(path, 'wb') as f:
-                f.write(stream.read())
-            os.chmod(path, 0755)
-        return True
+            file.save(path)
+            os.chmod(path, 0o755)
+        return path
 
     @classmethod
     def get(cls, path, hash_):
