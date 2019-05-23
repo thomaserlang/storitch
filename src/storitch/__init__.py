@@ -49,7 +49,7 @@ def store_files():
             file_.stream.seek(0)
             path = app.config['STORE_ENGINE'].store(
                 path=app.config['STORE_PATH'],
-                file=file_.stream,
+                file=file_,
                 hash_=hash_,
             )
             info = {
