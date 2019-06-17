@@ -1,7 +1,7 @@
 import asyncio
 from tornado import web
 from storitch import config
-from handlers import store
+from storitch.handlers import store
 from concurrent.futures import ThreadPoolExecutor
 
 def App():
