@@ -14,7 +14,7 @@ RUN pip install https://github.com/thomaserlang/storitch/archive/master.zip
 RUN useradd -r storitch -s /bin/false
 
 COPY nginx.conf /etc/nginx/nginx.conf
-COPY storitch_config.py /etc/storitch_config.py
+COPY storitch.yaml /etc/storitch.yaml
 COPY supervisor.conf /etc/supervisor/supervisord.conf
 
 RUN mkdir /var/log/storitch && chown storitch:storitch /var/log/storitch

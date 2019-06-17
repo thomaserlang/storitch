@@ -1,6 +1,4 @@
-#coding=utf-8 
-import os
-from datetime import datetime
+import hashlib
 
 def path_from_hash(hash_, levels=2, length=2):
     '''
@@ -40,33 +38,11 @@ def path_from_hash(hash_, levels=2, length=2):
         path.append(hash_[i*length:(i*length)+length])
     return '/'.join(path)
 
-class Folder_store(object):
-
-    @classmethod
-    def store(cls, path, file, hash_):
-        '''
-
-        '''
-        path = os.path.normpath(os.path.join(
-            path,
-            path_from_hash(
-                hash_,
-                levels=2,
-                length=2,
-            ),
-        ))
-        if not os.path.exists(path):
-            os.makedirs(path, mode=0o755)
-        path = os.path.join(path, hash_)
-        if not os.path.exists(path):
-            file.save(path)
-            os.chmod(path, 0o755)
-        return path
-
-    @classmethod
-    def get(cls, path, hash_):
-        return os.path.normpath(os.path.join(
-            path,
-            path_from_hash(hash_),
-            hash_,
-        ))
+def file_sha256(path, chunk_size=65536):
+    h = hashlib.sha256()
+    with open(path, 'rb') as f:
+        while True:
+            chunk = f.read(chunk_size)
+            if not chunk:
+                return h.hexdigest()
+            h.update(chunk)

@@ -7,17 +7,21 @@ with open('requirements.txt') as f:
 
 setup(
     name='Storitch',
-    version='0.0.12',
+    version='0.1',
     author='Thomas Erlang',
     author_email='thomas@erlang.dk',
     url='https://github.com/thomaserlang/storitch',
-    description='Simple file storage system',
+    description='File upload and thumbnail generator',
     long_description=__doc__,
-    package_dir={'': 'src'},
-    packages=find_packages('src'),
+    packages=find_packages(),
     zip_safe=False,
     install_requires=install_requires,
     license=None,
     include_package_data=True,
     classifiers=[],
+    entry_points={
+        'console_scripts': [
+            'storitch = storitch.runner:app',
+        ],
+    },
 )
