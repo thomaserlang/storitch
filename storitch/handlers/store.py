@@ -1,4 +1,4 @@
-import json, tempfile, os, logging, re
+import json, tempfile, os, logging, re, shutil
 from tornado import httpclient, web, queues
 from storitch import utils, config
 from storitch.decorators import run_on_executor
@@ -141,7 +141,7 @@ def move_to_permanent_store(temp_path, filename):
         os.makedirs(path, mode=0o755)
     path = os.path.join(path, hash_)
     if not os.path.exists(path):
-        os.rename(temp_path, path)
+        shutil.move(temp_path, path)
         os.chmod(path, 0o755)
 
     extra = {
