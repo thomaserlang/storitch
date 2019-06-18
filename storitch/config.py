@@ -13,7 +13,7 @@ config = {
     },
     'image_exts': [
         '.jpg', '.jpeg', '.png', '.tiff', '.tif', '.gif',
-        '.bmp', '.bmp2', '.bmp3' '.dcm','.dicom', '.webp',
+        '.bmp', '.bmp2', '.bmp3', '.dcm', '.dicom', '.webp',
     ],
 }
 
