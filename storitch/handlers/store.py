@@ -159,7 +159,7 @@ def move_to_permanent_store(temp_path, filename):
 
     return {
         'stored': True,
-        'size': os.stat(path).st_size,
+        'filesize': os.stat(path).st_size,
         'hash': hash_,
         'filename': filename,
         **extra

@@ -15,7 +15,7 @@ class Test(unittest.TestCase):
         try:
             r = move_to_permanent_store(tempname, 'test')
             self.assertEqual(r['hash'], '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08')
-            self.assertEqual(r['size'], 4)
+            self.assertEqual(r['filesize'], 4)
             self.assertTrue(r['stored'])
             self.assertEqual(r['filename'], 'test')
         finally:
