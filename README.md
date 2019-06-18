@@ -8,13 +8,17 @@ You upload the file to `POST /store` and Storitch returns the file's hash
 and if it were stored or not.
 
 ```js
-{
-    "hash": "as213..af",
-    "stored": true,
-    "type": "image",
-    "width": 200,
-    "height": 250
-}
+[
+    {
+        "filename": "2014-07-22 01.11.57.jpg",
+        "stored": true,
+        "filesize": 2498203,
+        "hash": "1de3dd0383e78e3503b5eacf68db7c5cc524ee25500a11c8f4cd793c475b4c31",
+        "height": 2448,
+        "width": 3264,
+        "type": "image"
+    }
+]
 ```
 
 
@@ -74,17 +78,18 @@ pip install https://github.com/thomaserlang/storitch/archive/master.zip
 Create a config for Storitch.
 
 ```
-sudo touch /etc/storitch_config.py
-sudo chown root:storitch /etc/storitch_config.py
-sudo chmod 750 /etc/storitch_config.py
-sudo nano /etc/storitch_config.py
+sudo touch /etc/storitch.yaml
+sudo chown root:storitch /etc/storitch.yaml
+sudo chmod 750 /etc/storitch.yaml
+sudo nano /etc/storitch.yaml
 ```
 
 Insert the following:
 
-```
-STORE_PATH = '/var/storitch'
-LOG_PATH = '/var/log/storitch/storitch.log'
+```yaml
+store_path = /var/storitch
+logging:
+    path: /var/log/storitch/storitch.log
 ```
 
 Configure supervisor to run Storitch.
@@ -95,11 +100,14 @@ Insert the following:
 
 ```
 [program:storitch]
-command=/virtualenv/storitch/bin/gunicorn -w 4 -b 127.0.0.1:4000 storitch:app
-environment=PYTHONPATH="/virtualenv/storitch",STORITCH_CONFIG="/etc/storitch_config.py"
+command=/virtualenv/storitch/bin/storitch --port=%(process_num)s
 user=storitch
+process_name=storitch-%(process_num)s
+numprocs=4
+numprocs_start=5000
 stdout_logfile=/var/log/storitch/supervisor.log
 stderr_logfile=/var/log/storitch/supervisor_error.log
+stopsignal=INT
 ```
 
 Create the log directory and folder to store the documents in.
@@ -119,10 +127,9 @@ Get supervisor to load the new configuration.
 
 Setup Nginx to serve the files.
 
-Here is an example config.
+Example config:
 
 ```
-#user  nobody;
 worker_processes  1;
 
 events {
@@ -133,18 +140,19 @@ http {
     include       mime.types;
     default_type  application/octet-stream;
     sendfile on;
-    keepalive_timeout  65;
-    tcp_nodelay on;
     gzip on;
-    gzip_disable "MSIE [1-6]\.(?!.*SV1)";
+    gzip_disable "msie6";
 
     upstream storitch {
-        server localhost:4000;
+        server localhost:5000;
+        server localhost:5001;
+        server localhost:5002;
+        server localhost:5003;
     }
 
     server {
         listen 80;
-        client_max_body_size 100M;
+        client_max_body_size 10g;
 
         location ~ /store {
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

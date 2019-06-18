@@ -1,9 +1,16 @@
 # Build:
-# docker build --rm -t storitch .
+# docker build --rm -t storitch --no-cache .
 # Run:
 # docker run -d --name=storitch -p 3000:80 -v /var/storitch:/var/storitch storitch
 # Start:
 # docker start storitch
+
+# Push:
+# docker tag <hash> thomaserlang/storitch
+# docker push thomaserlang/storitch
+
+# Terminal:
+# docker exec -t -i docker-dev_storitch_1 /bin/bash
 
 FROM python:3-slim
 
