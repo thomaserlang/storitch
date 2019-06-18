@@ -1,4 +1,5 @@
-import json, tempfile, os, logging, re, shutil
+from typing import Union, Dict, List, Any, Tuple, Optional
+import json, tempfile, os, logging, re, shutil, mimetypes
 from tornado import httpclient, web, queues
 from storitch import utils, config
 from storitch.decorators import run_on_executor
@@ -6,15 +7,17 @@ from wand import image, exceptions
 
 class Base_handler(web.RequestHandler):
 
-    def write_object(self, data):
+    def write_object(self, data: Union[Dict, List]) -> None:
+        self.set_json_headers()
         self.write(json.dumps(data))
 
-    def set_default_headers(self):
+    def set_json_headers(self) -> None:
         self.set_header('Cache-Control', 'no-cache, must-revalidate')
         self.set_header('Expires', 'Sat, 26 Jul 1997 05:00:00 GMT')
         self.set_header('Content-Type', 'application/json')
 
-    def write_error(self, status_code, **kwargs):
+    def write_error(self, status_code: int, **kwargs) -> None:
+        self.set_json_headers()
         error = {'error': 'Unknown error'}
         if 'exc_info' in kwargs:
             error['error'] = str(kwargs['exc_info'][1])
@@ -22,12 +25,29 @@ class Base_handler(web.RequestHandler):
         self.write_object(error)
 
     @run_on_executor
-    def move_to_permanent_store(self, temp_path, filename):
+    def move_to_permanent_store(self, temp_path: str, filename: str) -> Dict[str, Any]:
         return move_to_permanent_store(temp_path, filename)
+
+    def get_content_type(self, path: str) -> str:
+        # From: https://www.tornadoweb.org/en/stable/_modules/tornado/web.html#StaticFileHandler
+        mime_type, encoding = mimetypes.guess_type(path)
+        # per RFC 6713, use the appropriate type for a gzip compressed file
+        if encoding == "gzip":
+            return "application/gzip"
+        # As of 2015-07-21 there is no bzip2 encoding defined at
+        # http://www.iana.org/assignments/media-types/media-types.xhtml
+        # So for that (and any other encoding), use octet-stream.
+        elif encoding is not None:
+            return "application/octet-stream"
+        elif mime_type is not None:
+            return mime_type
+        # if mime_type not detected, use application/octet-stream
+        else:
+            return "application/octet-stream"
 
 class Multipart_handler(Base_handler):
 
-    async def post(self):
+    async def post(self) -> None:
         if 'multipart/form-data' not in self.request.headers.get('Content-Type').lower():
             raise web.HTTPError(400, 
                 'Content-Type must be multipart/form-data, was: {}'.format(
@@ -50,7 +70,7 @@ class Multipart_handler(Base_handler):
         self.write_object(results)
 
     @run_on_executor
-    def save_body(self, body):
+    def save_body(self, body: bytes) -> str:
         with tempfile.NamedTemporaryFile(delete=False, prefix='storitch-') as t:
             t.write(body)
             return t.name
@@ -58,7 +78,7 @@ class Multipart_handler(Base_handler):
 @web.stream_request_body
 class Session_handler(Base_handler):
 
-    def prepare(self):
+    def prepare(self) -> None:
         if 'application/octet-stream' not in self.request.headers.get('Content-Type').lower():
             raise web.HTTPError(400, 
                 'Content-Type must be application/octet-stream, was: {}'.format(
@@ -88,10 +108,10 @@ class Session_handler(Base_handler):
 
         self.file = open(self.temp_path, 'ab')
     
-    async def data_received(self, chunk):
+    async def data_received(self, chunk: bytes) -> None:
         self.file.write(chunk)
 
-    async def put(self):
+    async def put(self) -> None:
         self.file.close()
 
         if self.h_finished == 'true':
@@ -102,18 +122,25 @@ class Session_handler(Base_handler):
                 'session': self.h_session,
             })
 
-    def new_session(self):
+    def new_session(self) -> str:
         with tempfile.NamedTemporaryFile(delete=False, prefix='storitch-') as t:
             return os.path.basename(t.name)
 
 class Thumbnail_handler(Base_handler):
 
-    async def get(self, name=None):
-        if not name:
+    async def get(self, hash_: Optional[str] = None) -> None:
+        if not hash_ or len(hash_) < 64:
             raise web.HTTPError(404, 'Please specify a file hash')
-        path = await thumbnail(name)
-        if not path:
-            self.write('Failed to create the thumbnail')
+        path = os.path.abspath(os.path.join(
+            os.path.realpath(config['store_path']),
+            utils.path_from_hash(hash_),
+            hash_
+        ))
+        if '@' in hash_:
+            path = await self.thumbnail(path)
+            if not path:
+                self.write('Failed to create the thumbnail')
+        self.set_header('Content-Type', self.get_content_type(path))
         with open(path, 'rb') as f:
             while True:
                 d = f.read(16384)
@@ -122,21 +149,17 @@ class Thumbnail_handler(Base_handler):
                 self.write(d)
 
     @run_on_executor
-    def thumbnail(self, name):
-        path = os.path.join(
-            config['store_path'], 
-            name
-        )
+    def thumbnail(self, path: str) -> str:
         if thumbnail(path):
             return path
 
-def move_to_permanent_store(temp_path, filename):
+def move_to_permanent_store(temp_path: str, filename: str) -> Dict[str, Any]:
     hash_ = utils.file_sha256(temp_path)
 
-    path = os.path.join(
-        os.path.realpath(os.path.expanduser(config['store_path'])),
+    path = os.path.abspath(os.path.join(
+        os.path.realpath(config['store_path']),
         utils.path_from_hash(hash_),
-    )
+    ))
     if not os.path.exists(path):
         os.makedirs(path, mode=0o755)
     path = os.path.join(path, hash_)
@@ -165,7 +188,7 @@ def move_to_permanent_store(temp_path, filename):
         **extra
     }
 
-def image_width_high(path):
+def image_width_high(path) -> Optional[Dict[str, int]]:
     try:
         with image.Image(filename=path) as img:
             return {
@@ -175,7 +198,7 @@ def image_width_high(path):
     except (ValueError, exceptions.MissingDelegateError):
         return None
 
-def thumbnail(path):
+def thumbnail(path: str) -> bool:
     '''
 
     Specify the path and add a "@" followed by the arguments.
@@ -244,19 +267,7 @@ def thumbnail(path):
         img.save(filename=path)
     return True
 
-def __parse_arguments(arguments):
-    '''
-
-    :param arguments: str
-    :returns: tuple
-        (
-            size_match,
-            rotate_match,
-            resolution_match,
-            page_match,
-            format_match
-        )
-    '''
+def __parse_arguments(arguments: str) -> Tuple[str, str, str, str, str]:
     size_match = re.search(
         'SX(\d+)|SY(\d+)',
         arguments,
