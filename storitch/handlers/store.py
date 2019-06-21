@@ -1,5 +1,5 @@
 from typing import Union, Dict, List, Any, Tuple, Optional
-import json, tempfile, os, logging, re, shutil, mimetypes
+import json, tempfile, os, logging, re, shutil, mimetypes, good
 from tornado import httpclient, web, queues
 from storitch import utils, config
 from storitch.decorators import run_on_executor
@@ -78,6 +78,12 @@ class Multipart_handler(Base_handler):
 @web.stream_request_body
 class Session_handler(Base_handler):
 
+    __schema__ = good.Schema({
+        'finished': good.Boolean(),
+        'filename': good.All(str, good.Length(min=1, max=255)),
+        good.Optional('session'): str,
+    })
+
     def prepare(self) -> None:
         if 'application/octet-stream' not in self.request.headers.get('Content-Type').lower():
             raise web.HTTPError(400, 
@@ -86,15 +92,15 @@ class Session_handler(Base_handler):
                 )
             )
 
-        self.h_finished = self.request.headers.get('S-Finished', None)
-        if self.h_finished not in ['true', 'false']:
-            raise web.HTTPError(400, 'Header: S-Finished must have the value: true or false.')
+        j = self.request.headers.get('storitch-json', None)
+        if not j:
+            raise web.HTTPError(400, 'Header: storitch-json must be set')
 
-        self.h_filename = self.request.headers.get('S-Filename', None)
-        if not self.h_filename:
-            raise web.HTTPError(400, 'Header: S-Filename must have a value.')
+        data = json.loads(j)        
 
-        self.h_session = self.request.headers.get('S-Session', None)
+        self.h_finished = data['finished']
+        self.h_filename = data['filename']
+        self.h_session = data.get('session')
 
         if not self.h_session:
             self.h_session = self.new_session()
@@ -107,6 +113,25 @@ class Session_handler(Base_handler):
             raise web.HTTPError(400, 'Session unknown')
 
         self.file = open(self.temp_path, 'ab')
+
+    def validate_json(self, data: Dict[str, Any]) -> Union[Dict[str, Any], List]:
+        try:
+            return self.__schema__(data)  
+        except good.MultipleInvalid as ee:
+            data = []
+            for e in ee:
+                data.append(
+                    '{}: {}'.format(
+                        '.'.join(str(x) for x in e.path),
+                        e.message,
+                    )
+                )
+            raise web.HTTPError(400,' - '.join(d for d in data))
+        except good.Invalid as e:
+            raise web.HTTPError(400, '{}: {}'.format(
+                '.'.join(str(x) for x in e.path),
+                e.message,
+            ))
     
     async def data_received(self, chunk: bytes) -> None:
         self.file.write(chunk)
@@ -114,7 +139,7 @@ class Session_handler(Base_handler):
     async def put(self) -> None:
         self.file.close()
 
-        if self.h_finished == 'true':
+        if self.h_finished:
             r = await self.move_to_permanent_store(self.temp_path, self.h_filename)
             self.write_object(r)
         else:

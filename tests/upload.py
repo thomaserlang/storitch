@@ -1,4 +1,4 @@
-import requests, logging
+import requests, logging, json
 from storitch import config, config_load, logger
 
 def upload_multipart():
@@ -8,6 +8,7 @@ def upload_multipart():
     )
     logging.debug(r.text)
     logging.debug(r.status_code)
+    r.raise_for_status()
     assert r.status_code == 201
     d = r.json()
     assert d[0]['hash'] == 'f29bc64a9d3732b4b9035125fdb3285f5b6455778edca72414671e0ca3b2e0de'
@@ -23,11 +24,16 @@ def upload_stream():
                 data=d,
                 headers={
                     'Content-Type': 'application/octet-stream',
-                    'S-Session': session,
-                    'S-Filename': 'test1.txt',
-                    'S-Finished': 'false' if d else 'true'
+                    'storitch-json': json.dumps({
+                        'session': session,
+                        'filename': 'testæøå.txt',
+                        'finished': False if d else True
+                    })
                 },
             )
+            logging.debug(r.text)
+            logging.debug(r.status_code)
+            r.raise_for_status()
             j = r.json()
             logging.debug(j)
             if 'session' in j:
@@ -37,6 +43,7 @@ def upload_stream():
         logging.debug(j)
         assert j['hash'] == 'f29bc64a9d3732b4b9035125fdb3285f5b6455778edca72414671e0ca3b2e0de'
         assert j['type'] == 'file'
+        assert j['filename'] == 'testæøå.txt'
 
 def thumbnail():
     r = requests.post(
@@ -45,6 +52,7 @@ def thumbnail():
     )
     logging.debug(r.text)
     logging.debug(r.status_code)
+    r.raise_for_status()
     assert r.status_code == 201
     d = r.json()
     assert d[0]['hash'] == '1171aad9f52efe4f577ccabec4aaeb063e28a80978f3853721381bca2b5fe501'
