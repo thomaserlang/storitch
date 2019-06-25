@@ -1,11 +1,8 @@
 Storitch
 ========
 
-Simple file storage system.
-
-Storitch is simple.  
-You upload the file to `POST /store` and Storitch returns the file's hash 
-and if it were stored or not.
+Upload the file to `POST /store` and Storitch returns the file's hash 
+and if it was stored or not.
 
 ```js
 [
@@ -21,17 +18,12 @@ and if it were stored or not.
 ]
 ```
 
-
 To retrieve the file you simply specify it's hash: `GET /<hash>`.
 
 If the file is an image you can resize, rotate and/or format it.
 Storitch uses imagemagick for this.
 
 Specify the hash and add a "@" followed by the arguments.
-
-This allows Storitch to get the original file, make the changes and
-save the file, so it never has to do it again, as long as the arguments 
-are precisely the same.
 
 Arguments can be specified as followed:
 
