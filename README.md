@@ -81,7 +81,7 @@ Insert the following:
 ```yaml
 store_path: /var/storitch
 logging:
-    path: /var/log/storitch/storitch.log
+    path: /var/log/storitch
 ```
 
 Configure supervisor to run Storitch.
