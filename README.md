@@ -79,7 +79,7 @@ sudo nano /etc/storitch.yaml
 Insert the following:
 
 ```yaml
-store_path = /var/storitch
+store_path: /var/storitch
 logging:
     path: /var/log/storitch/storitch.log
 ```
