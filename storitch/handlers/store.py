@@ -191,7 +191,8 @@ def move_to_permanent_store(temp_path: str, filename: str) -> Dict[str, Any]:
     if not os.path.exists(path):
         shutil.move(temp_path, path)
         os.chmod(path, 0o755)
-
+    else:
+        os.remove(temp_path)
     extra = {
         'type': 'file',
     }
