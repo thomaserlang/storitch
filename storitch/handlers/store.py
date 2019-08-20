@@ -202,9 +202,10 @@ def move_to_permanent_store(temp_path: str, filename: str) -> Dict[str, Any]:
         ext = d[1]
         if ext.lower() in config['image_exts']:
             wh = image_width_high(path)
-            wh['type'] = 'image'
             if wh:
-                extra.update(wh)
+                wh['type'] = 'image'
+                if wh:
+                    extra.update(wh)
 
     return {
         'stored': True,
