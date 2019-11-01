@@ -269,17 +269,19 @@ def thumbnail(path: str) -> bool:
         return True
     size_match, rotate_match, resolution_match, \
         page_match, format_match = __parse_arguments(p[1])
+
+    # a specific page in a PDF document
+    if page_match and page_match.group(1) != None:
+        page = '[{}]'.format(page_match.group(1))
+    else:
+        # Prevent a dicom file or pdf file from extracting multiple images
+        page = '[0]'
+
     o = {
-        'filename': p[0]
+        'filename': p[0]+page
     }
     if resolution_match and resolution_match.group(1) != None:
         o['resolution'] = int(resolution_match.group(1))
-    # a specific page in a PDF document
-    if page_match and page_match.group(1) != None:
-        path += '[{}]'.format(page_match.group(1))
-    else:
-        # Prevent a dicom file or pdf file from extracting multiple images
-        path += '[0]'
 
     with image.Image(**o) as img:
         if size_match:

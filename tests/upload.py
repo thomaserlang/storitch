@@ -60,6 +60,13 @@ def thumbnail():
     assert d[0]['width'] == 5
     assert d[0]['height'] == 5
 
+    r = requests.get(
+        'http://127.0.0.1:{}/1171aad9f52efe4f577ccabec4aaeb063e28a80978f3853721381bca2b5fe501@.jpg'.format(config['port']),
+    )
+    logging.debug(r.text)
+    logging.debug(r.status_code)
+    assert r.status_code == 200
+
 if __name__ == '__main__':
     config_load()
     logger.set_logger(None)
