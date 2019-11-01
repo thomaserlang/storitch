@@ -272,13 +272,15 @@ def thumbnail(path: str) -> bool:
     o = {
         'filename': p[0]
     }
-    if resolution_match:
-        if resolution_match.group(1) != None:
-            o['resolution'] = int(resolution_match.group(1))
-    if page_match:
-        # a specific page in a PDF document
-        if page_match.group(1) != None:
-            path += '[{}]'.format(page_match.group(1))
+    if resolution_match and resolution_match.group(1) != None:
+        o['resolution'] = int(resolution_match.group(1))
+    # a specific page in a PDF document
+    if page_match and page_match.group(1) != None:
+        path += '[{}]'.format(page_match.group(1))
+    else:
+        # Prevent a dicom file or pdf file from extracting multiple images
+        path += '[0]'
+
     with image.Image(**o) as img:
         if size_match:
             # resize, keep aspect ratio
