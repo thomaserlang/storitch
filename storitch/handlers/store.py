@@ -320,7 +320,7 @@ def __parse_arguments(arguments: str) -> Tuple[str, str, str, str, str]:
         re.I
     )
     format_match = re.search(
-        '\.([a-z]{2,5})',
+        '\.([a-z0-9]{2,5})',
         arguments,
         re.I
     )
