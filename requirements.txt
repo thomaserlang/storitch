@@ -1,5 +1,5 @@
-tornado==6.0.3
-pyyaml==5.1.2
-wand==0.5.7
-click==7.0
+tornado==6.1
+pyyaml==6.0
+wand==0.6.7
+click==8.0.1
 good==0.0.8

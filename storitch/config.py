@@ -14,6 +14,7 @@ config = {
     'image_exts': [
         '.jpg', '.jpeg', '.png', '.tiff', '.tif', '.gif',
         '.bmp', '.bmp2', '.bmp3', '.dcm', '.dicom', '.webp',
+        '.heic',
     ],
 }
 
@@ -24,6 +25,11 @@ def load(path=None):
         '../storitch.yaml',
         '/etc/storitch/storitch.yaml',
         '/etc/storitch.yaml',
+        '~/storitch.yml',
+        './storitch.yml',
+        '../storitch.yml',
+        '/etc/storitch/storitch.yml',
+        '/etc/storitch.yml',
     ]
     if not path:
         path = os.environ.get('STORITCH_CONFIG', None)

@@ -40,3 +40,4 @@ nosetests.xml
 *.sublime-workspace
 *.db
 storitch.yaml
+.vscode/
