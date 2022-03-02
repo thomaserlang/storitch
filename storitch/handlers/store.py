@@ -1,6 +1,6 @@
 from typing import Union, Dict, List, Any, Tuple, Optional
-import json, tempfile, os, logging, re, shutil, mimetypes, good
-from tornado import httpclient, web, queues
+import json, tempfile, os, re, shutil, mimetypes, good
+from tornado import web
 from storitch import utils, config
 from storitch.decorators import run_on_executor
 from wand import image, exceptions

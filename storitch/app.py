@@ -1,8 +1,13 @@
 import asyncio
+from functools import partial
+import logging
+import signal
 from tornado import web
 from storitch import config
 from storitch.handlers import store
 from concurrent.futures import ThreadPoolExecutor
+
+from storitch.io_sighandler import sig_handler
 
 def App():
     return web.Application([
@@ -22,7 +27,10 @@ def run():
     loop = asyncio.get_event_loop()
     app = App()
     app.loop = loop
-    app.listen(config['port'])
+    server = app.listen(config['port'])
+    signal.signal(signal.SIGTERM, partial(sig_handler, server, app))
+    signal.signal(signal.SIGINT, partial(sig_handler, server, app))  
+    logging.info(f'Storitch started on port: {config["port"]}')
     loop.run_forever()
 
 if __name__ == '__main__':

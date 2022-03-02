@@ -40,4 +40,5 @@ nosetests.xml
 *.sublime-workspace
 *.db
 storitch.yaml
+storitch.yml
 .vscode/
