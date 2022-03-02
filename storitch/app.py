@@ -4,13 +4,14 @@ import logging
 import signal
 from tornado import web
 from storitch import config
-from storitch.handlers import store
+from storitch.handlers import store, health
 from concurrent.futures import ThreadPoolExecutor
 
 from storitch.io_sighandler import sig_handler
 
 def App():
     return web.Application([
+            (r'/health', health.Handler),
             (r'/upload', store.Multipart_handler), # For backwards compatibility
             (r'/store', store.Multipart_handler),
             (r'/store/session', store.Session_handler),
