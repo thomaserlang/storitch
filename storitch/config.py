@@ -2,7 +2,7 @@ import os, yaml
 
 config = {
     'debug': False,
-    'port': 5000,
+    'port': 3000,
     'store_path': '/var/storitch',
     'pool_size': 5,
     'logging': {
@@ -40,7 +40,7 @@ def load(path=None):
                     path = p
                     break
     if not path:
-        raise Exception('No config file specified.')
+        return
     if not os.path.isfile(path):
         raise Exception('Config: "{}" could not be found.'.format(path))
     with open(path) as f:
