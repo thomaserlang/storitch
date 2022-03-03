@@ -10,13 +10,13 @@ from storitch import logger
 def app(config, logging_path, logging_level, port):
     import storitch
     storitch.config_load(config)
-    logger.set_logger('storitch-{}.log'.format(port))
     if logging_path != None:
         storitch.config['logging']['path'] = logging_path
     if logging_level:
         storitch.config['logging']['level'] = logging_level
     if port:
         storitch.config['port'] = port
+    logger.set_logger('storitch-{}.log'.format(port))
     import storitch.app
     storitch.app.run()
 
