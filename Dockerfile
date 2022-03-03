@@ -5,7 +5,7 @@
 
 FROM python:3.10-slim-bullseye
 
-RUN apt-get update; apt-get upgrade -y; apt-get install libmagickwand-dev -y
+RUN apt-get update; apt-get upgrade -y; apt-get install libmagickwand-dev curl -y
 
 COPY . .
 
