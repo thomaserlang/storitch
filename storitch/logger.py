@@ -7,7 +7,7 @@ class logger(object):
     @classmethod
     def set_logger(cls, filename):
         logger = logging.getLogger()
-        logger.setLevel(getattr(logging, config['logging']['level'].upper()))
+        logger.setLevel(config['logging']['level'].upper())
 
         format_ = log.LogFormatter(
             '[%(color)s%(levelname)s%(end_color)s %(asctime)s %(module)s:%(lineno)d]: %(message)s', 
