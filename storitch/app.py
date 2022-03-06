@@ -29,10 +29,15 @@ def run():
     app = App()
     app.loop = loop
     server = app.listen(config['port'])
+
     signal.signal(signal.SIGTERM, partial(sig_handler, server, app))
     signal.signal(signal.SIGINT, partial(sig_handler, server, app))  
-    logging.info(f'Storitch started on port: {config["port"]}')
+
+    log = logging.getLogger('main')
+    log.setLevel('INFO')
+    log.info(f'Web server started on port: {config["port"]}')
     loop.run_forever()
+    log.info('Storitch server stopped')
 
 if __name__ == '__main__':
     from storitch import config_load, logger
