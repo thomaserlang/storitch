@@ -155,12 +155,15 @@ class Thumbnail_handler(Base_handler):
 
     async def get(self, hash_: Optional[str] = None) -> None:
         if not hash_ or len(hash_) < 64:
-            raise web.HTTPError(404, 'Please specify a file hash')
+            raise web.HTTPError(400, 'Please specify a file hash')
         path = os.path.abspath(os.path.join(
             os.path.realpath(config['store_path']),
             utils.path_from_hash(hash_),
             hash_
         ))
+        if not os.path.exists(path.split('@')[0]):
+            raise web.HTTPError(404)
+            
         if '@' in hash_:
             path = await self.thumbnail(path)
             if not path:
