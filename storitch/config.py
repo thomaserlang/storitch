@@ -6,7 +6,7 @@ config = {
     'store_path': '/var/storitch',
     'pool_size': 5,
     'logging': {
-        'level': 'warning',
+        'level': 'info',
         'path': None,
         'max_size': 100 * 1000 * 1000,# ~ 95 mb
         'num_backups': 10,
