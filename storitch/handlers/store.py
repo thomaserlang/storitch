@@ -173,9 +173,9 @@ class Thumbnail_handler(Base_handler):
             if not path:
                 self.write('Failed to create the thumbnail')
         self.set_header('Content-Type', self.get_content_type(path))
-        with open(path, 'rb') as f:
+        async with aiofiles.open(path, 'rb') as f:
             while True:
-                d = f.read(16384)
+                d = await f.read(16384)
                 if not d:
                     break
                 self.write(d)
