@@ -4,7 +4,7 @@ config = {
     'debug': False,
     'port': 3000,
     'store_path': '/var/storitch',
-    'pool_size': 5,
+    'pool_size': 20,
     'logging': {
         'level': 'info',
         'path': None,
