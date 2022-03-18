@@ -1,5 +1,6 @@
+import asyncio
 from typing import Union, Dict, List, Any, Tuple, Optional
-import json, tempfile, os, re, shutil, mimetypes, good
+import json, os, re, shutil, mimetypes, good
 import uuid
 import aiofiles
 from tornado import web
@@ -68,20 +69,24 @@ class Multipart_handler(Base_handler):
             raise web.HTTPError(400, 'No files uploaded')
 
         self.set_status(201)
-        results = []
+        wait_for = []
         for n in self.request.files:
-            for f in self.request.files[n]: 
-                temp_path = await self.save_body(f['body'])
+            for f in self.request.files[n]:
+                wait_for.append(
+                    self.save(f['filename'], f['body'])
+                )
                 f['body'] = None
-                r = await self.copy_to_permanent_store(temp_path, f['filename'])
-                results.append(r)
-
+        results = await asyncio.gather(*wait_for)
         self.write_object(results)
 
-    async def save_body(self, body: bytes) -> str:
-        with tempfile.NamedTemporaryFile(delete=False, prefix='storitch-') as t:
-            t.write(body)
-            return t.name
+    async def save(self, filename: str, body: bytes):
+        temp_path = os.path.join(
+            config['temp_path'],
+            str(uuid.uuid4()),
+        )
+        async with aiofiles.open(temp_path, 'wb', executor=self.executor) as f:
+            await f.write(body)
+        return await self.copy_to_permanent_store(temp_path, filename)
 
 @web.stream_request_body
 class Session_handler(Base_handler):
