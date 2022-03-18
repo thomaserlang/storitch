@@ -1,5 +1,6 @@
 from typing import Union, Dict, List, Any, Tuple, Optional
 import json, tempfile, os, re, shutil, mimetypes, good
+from urllib.error import HTTPError
 from tornado import web
 from storitch import utils, config
 from storitch.decorators import run_on_executor
@@ -270,6 +271,9 @@ def thumbnail(path: str) -> bool:
         return False
     if os.path.exists(path):
         return True
+    if len(p[1]) > 40:
+        raise web.HTTPError(400, 'Parameters too long, max 40.')
+        
     size_match, rotate_match, resolution_match, \
         page_match, format_match = __parse_arguments(p[1])
 
@@ -303,27 +307,27 @@ def thumbnail(path: str) -> bool:
 
 def __parse_arguments(arguments: str) -> Tuple[str, str, str, str, str]:
     size_match = re.search(
-        'SX(\d+)|SY(\d+)',
+        r'SX([0-9]+)|SY([0-9]+)',
         arguments,
         re.I
     )
     rotate_match = re.search(
-        'ROTATE(-?\d+)',
+        r'ROTATE(-?[0-9]+)',
         arguments,
         re.I
     )
     resolution_match = re.search(
-        'RES(\d+)',
+        r'RES([0-9]+)',
         arguments,
         re.I
     )
     page_match = re.search(
-        'PAGE(\d+)',
+        r'PAGE([0-9]+)',
         arguments,
         re.I
     )
     format_match = re.search(
-        '\.([a-z0-9]{2,5})',
+        r'\.([a-z0-9]{2,5})',
         arguments,
         re.I
     )
