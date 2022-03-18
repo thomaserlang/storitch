@@ -1,25 +1,26 @@
-import unittest, tempfile, shutil, os
+import unittest, tempfile,  os
 from unittest.mock import patch, Mock
-from storitch.handlers.store import move_to_permanent_store, thumbnail, image_width_high
+from storitch.handlers.store import copy_to_permanent_store, thumbnail, image_width_high
 from storitch import config
 
 class Test(unittest.TestCase):
 
-    def test_move_to_permanent_store(self):
+    def test_copy_to_permanent_store(self):
         with tempfile.NamedTemporaryFile(delete=False) as f:
             f.write(b'test')
             f.flush()
             tempname = f.name
-        t = tempfile.TemporaryDirectory()
-        config['store_path'] = t.name
-        try:
-            r = move_to_permanent_store(tempname, 'test')
-            self.assertEqual(r['hash'], '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08')
-            self.assertEqual(r['filesize'], 4)
-            self.assertTrue(r['stored'])
-            self.assertEqual(r['filename'], 'test')
-        finally:
-            t.cleanup()
+
+            t = tempfile.TemporaryDirectory()
+            config['store_path'] = t.name
+            try:
+                r = copy_to_permanent_store(tempname, 'test')
+                self.assertEqual(r['hash'], '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08')
+                self.assertEqual(r['filesize'], 4)
+                self.assertTrue(r['stored'])
+                self.assertEqual(r['filename'], 'test')
+            finally:
+                t.cleanup()
 
     def test_thumbnail(self):
         m = Mock

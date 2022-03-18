@@ -16,6 +16,8 @@ config = {
         '.bmp', '.bmp2', '.bmp3', '.dcm', '.dicom', '.webp',
         '.heic',
     ],
+    'dir_mode': '755',
+    'file_mode': '444',
 }
 
 def load(path=None):

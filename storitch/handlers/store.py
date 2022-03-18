@@ -1,6 +1,5 @@
 from typing import Union, Dict, List, Any, Tuple, Optional
 import json, tempfile, os, re, shutil, mimetypes, good
-from urllib.error import HTTPError
 from tornado import web
 from storitch import utils, config
 from storitch.decorators import run_on_executor
@@ -26,8 +25,11 @@ class Base_handler(web.RequestHandler):
         self.write_object(error)
 
     @run_on_executor
-    def move_to_permanent_store(self, temp_path: str, filename: str) -> Dict[str, Any]:
-        return move_to_permanent_store(temp_path, filename)
+    def copy_to_permanent_store(self, temp_path: str, filename: str) -> Dict[str, Any]:
+        try:
+            return copy_to_permanent_store(temp_path, filename)
+        finally:
+            os.remove(temp_path)
 
     def get_content_type(self, path: str) -> str:
         # From: https://www.tornadoweb.org/en/stable/_modules/tornado/web.html#StaticFileHandler
@@ -65,7 +67,7 @@ class Multipart_handler(Base_handler):
             for f in self.request.files[n]: 
                 temp_path = await self.save_body(f['body'])
                 f['body'] = None
-                r = await self.move_to_permanent_store(temp_path, f['filename'])
+                r = await self.copy_to_permanent_store(temp_path, f['filename'])
                 results.append(r)
 
         self.write_object(results)
@@ -141,7 +143,7 @@ class Session_handler(Base_handler):
         self.file.close()
 
         if self.h_finished:
-            r = await self.move_to_permanent_store(self.temp_path, self.h_filename)
+            r = await self.copy_to_permanent_store(self.temp_path, self.h_filename)
             self.write_object(r)
         else:
             self.write_object({
@@ -157,11 +159,11 @@ class Thumbnail_handler(Base_handler):
     async def get(self, hash_: Optional[str] = None) -> None:
         if not hash_ or len(hash_) < 64:
             raise web.HTTPError(400, 'Please specify a file hash')
-        path = os.path.abspath(os.path.join(
-            os.path.realpath(config['store_path']),
+        path = os.path.join(
+            config['store_path'],
             utils.path_from_hash(hash_),
             hash_
-        ))
+        )
         if not os.path.exists(path.split('@')[0]):
             raise web.HTTPError(404)
             
@@ -182,35 +184,34 @@ class Thumbnail_handler(Base_handler):
         if thumbnail(path):
             return path
 
-def move_to_permanent_store(temp_path: str, filename: str) -> Dict[str, Any]:
+def copy_to_permanent_store(temp_path: str, filename: str) -> Dict[str, Any]:
     hash_ = utils.file_sha256(temp_path)
-
-    path = os.path.abspath(os.path.join(
-        os.path.realpath(config['store_path']),
+    
+    dir = os.path.join(
+        config['store_path'],
         utils.path_from_hash(hash_),
-    ))
+    )
+    if not os.path.exists(dir):
+        os.makedirs(dir, mode=int(config['dir_mode'], 8))
+    path = os.path.join(dir, hash_)
     if not os.path.exists(path):
-        os.makedirs(path, mode=0o755)
-    path = os.path.join(path, hash_)
-    if not os.path.exists(path):
-        shutil.move(temp_path, path)
-        os.chmod(path, 0o755)
-    else:
-        os.remove(temp_path)
+        shutil.copy(temp_path, path, follow_symlinks=False)
+        os.chmod(path, int(config['file_mode'], 8))
+    
     extra = {
         'type': 'file',
     }
 
+    # If an image, extract it's width and hight
     d = os.path.splitext(filename)
     if len(d) == 2:
         ext = d[1]
         if ext.lower() in config['image_exts']:
-            wh = image_width_high(path)
+            wh = image_width_high(temp_path)
             if wh:
                 wh['type'] = 'image'
                 if wh:
                     extra.update(wh)
-
     return {
         'stored': True,
         'filesize': os.stat(path).st_size,
