@@ -7,9 +7,9 @@ from storitch import logger
 @click.option('--logging_path', '-lp', default=None, help='a folder to store the log files in')
 @click.option('--logging_level', '-ll', default=None, help='notset, debug, info, warning, error or critical')
 @click.option('--port', '-p', help='port, default 3000')
-@click.option('--pool-size', '-ps', help='pool size for the executor, default 5')
+@click.option('--max-workers', '-mw', help='pool size for the executor, default: cpu_count + 4')
 @click.option('--temp-path', '-tp', help='Path for temporary files')
-def app(config, logging_path, logging_level, port, pool_size, temp_path):
+def app(config, logging_path, logging_level, port, max_workers, temp_path):
     import storitch
     storitch.config_load(config)
     if logging_path != None:
@@ -18,8 +18,8 @@ def app(config, logging_path, logging_level, port, pool_size, temp_path):
         storitch.config['logging']['level'] = logging_level
     if port:
         storitch.config['port'] = port
-    if pool_size:
-        storitch.config['pool_size'] = int(pool_size)
+    if max_workers:
+        storitch.config['max_workers'] = int(max_workers)
     if temp_path:
         storitch.config['temp_path'] = temp_path
     logger.set_logger('storitch-{}.log'.format(port))

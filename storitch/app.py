@@ -21,7 +21,7 @@ def App():
         autoescape=None,
         xsrf_cookies=False,
         debug=config['debug'],
-        executor=ThreadPoolExecutor(int(config['pool_size']))
+        executor=ThreadPoolExecutor(int(config['max_workers']) if config['max_workers'] else None)
     )
 
 def run():
