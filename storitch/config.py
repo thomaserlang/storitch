@@ -1,4 +1,4 @@
-import os, yaml
+import os, yaml, tempfile
 
 config = {
     'debug': False,
@@ -18,6 +18,7 @@ config = {
     ],
     'dir_mode': '755',
     'file_mode': '444',
+    'temp_path': tempfile.gettempdir(),
 }
 
 def load(path=None):

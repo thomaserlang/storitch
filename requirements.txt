@@ -3,3 +3,4 @@ pyyaml==6.0
 wand==0.6.7
 click==8.0.1
 good==0.0.8
+aiofiles==0.8.0

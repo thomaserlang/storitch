@@ -1,5 +1,7 @@
 from typing import Union, Dict, List, Any, Tuple, Optional
 import json, tempfile, os, re, shutil, mimetypes, good
+import uuid
+import aiofiles
 from tornado import web
 from storitch import utils, config
 from storitch.decorators import run_on_executor
@@ -30,6 +32,10 @@ class Base_handler(web.RequestHandler):
             return copy_to_permanent_store(temp_path, filename)
         finally:
             os.remove(temp_path)
+
+    @property
+    def executor(self):
+        return self.application.settings['executor']
 
     def get_content_type(self, path: str) -> str:
         # From: https://www.tornadoweb.org/en/stable/_modules/tornado/web.html#StaticFileHandler
@@ -72,8 +78,7 @@ class Multipart_handler(Base_handler):
 
         self.write_object(results)
 
-    @run_on_executor
-    def save_body(self, body: bytes) -> str:
+    async def save_body(self, body: bytes) -> str:
         with tempfile.NamedTemporaryFile(delete=False, prefix='storitch-') as t:
             t.write(body)
             return t.name
@@ -106,16 +111,25 @@ class Session_handler(Base_handler):
         self.h_session = data.get('session')
 
         if not self.h_session:
-            self.h_session = self.new_session()
+            self.h_session = str(uuid.uuid4())
 
         self.temp_path = os.path.join(
-            tempfile.gettempdir(), 
+            config['temp_path'], 
             self.h_session
         )
-        if not os.path.isfile(self.temp_path):
-            raise web.HTTPError(400, 'Session unknown')
+    
+    async def data_received(self, chunk: bytes) -> None:
+        async with aiofiles.open(self.temp_path, 'ab', executor=self.executor) as f:
+            await f.write(chunk)
 
-        self.file = open(self.temp_path, 'ab')
+    async def put(self) -> None:
+        if self.h_finished:
+            r = await self.copy_to_permanent_store(self.temp_path, self.h_filename)
+            self.write_object(r)
+        else:
+            self.write_object({
+                'session': self.h_session,
+            })
 
     def validate_json(self, data: Dict[str, Any]) -> Union[Dict[str, Any], List]:
         try:
@@ -135,24 +149,6 @@ class Session_handler(Base_handler):
                 '.'.join(str(x) for x in e.path),
                 e.message,
             ))
-    
-    async def data_received(self, chunk: bytes) -> None:
-        self.file.write(chunk)
-
-    async def put(self) -> None:
-        self.file.close()
-
-        if self.h_finished:
-            r = await self.copy_to_permanent_store(self.temp_path, self.h_filename)
-            self.write_object(r)
-        else:
-            self.write_object({
-                'session': self.h_session,
-            })
-
-    def new_session(self) -> str:
-        with tempfile.NamedTemporaryFile(delete=False, prefix='storitch-') as t:
-            return os.path.basename(t.name)
 
 class Thumbnail_handler(Base_handler):
 
