@@ -198,7 +198,7 @@ def copy_to_permanent_store(temp_path: str, filename: str) -> Dict[str, Any]:
         os.makedirs(dir, mode=int(config['dir_mode'], 8))
     path = os.path.join(dir, hash_)
     if not os.path.exists(path):
-        shutil.copy(temp_path, path, follow_symlinks=False)
+        shutil.move(temp_path, path)
         os.chmod(path, int(config['file_mode'], 8))
     
     extra = {
