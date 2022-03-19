@@ -173,14 +173,15 @@ class Download_handler(Base_handler):
             if not path:
                 self.write('Failed to create the thumbnail')
         self.set_header('Content-Type', self.get_content_type(path))
-        async with aiofiles.open(path, 'rb') as f:
+        
+        async with aiofiles.open(path, 'rb', buffering=0) as f:
             self.set_header('Content-Length', os.fstat(f.fileno()).st_size)
             while True:
-                d = await f.read(16384)
+                d = await f.read(128*1024)
                 if not d:
                     break
                 self.write(d)
-                self.flush()
+                await self.flush()
 
     @run_on_executor
     def thumbnail(self, path: str) -> str:
