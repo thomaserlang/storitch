@@ -155,7 +155,7 @@ class Session_handler(Base_handler):
                 e.message,
             ))
 
-class Thumbnail_handler(Base_handler):
+class Download_handler(Base_handler):
 
     async def get(self, hash_: Optional[str] = None) -> None:
         if not hash_ or len(hash_) < 64:

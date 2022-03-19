@@ -15,8 +15,8 @@ def App():
             (r'/upload', store.Multipart_handler), # For backwards compatibility
             (r'/store', store.Multipart_handler),
             (r'/store/session', store.Session_handler),
-            (r'/([A-Za-z0-9@._]+)', store.Thumbnail_handler),
-            (r'/', store.Thumbnail_handler),
+            (r'/([A-Za-z0-9@._]+)', store.Download_handler),
+            (r'/', store.Download_handler),
         ],
         autoescape=None,
         xsrf_cookies=False,
