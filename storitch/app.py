@@ -28,7 +28,10 @@ def run():
     loop = asyncio.get_event_loop()
     app = App()
     app.loop = loop
-    server = app.listen(config['port'])
+    server = app.listen(config['port'],
+    
+        max_buffer_size=10485760000, #10GB
+    )
 
     signal.signal(signal.SIGTERM, partial(sig_handler, server, app))
     signal.signal(signal.SIGINT, partial(sig_handler, server, app))  
