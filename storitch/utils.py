@@ -38,11 +38,11 @@ def path_from_hash(hash_, levels=2, length=2):
         path.append(hash_[i*length:(i*length)+length])
     return '/'.join(path)
 
-def file_sha256(path, chunk_size=65536):
-    h = hashlib.sha256()
-    with open(path, 'rb') as f:
-        while True:
-            chunk = f.read(chunk_size)
-            if not chunk:
-                return h.hexdigest()
-            h.update(chunk)
+def file_sha256(path, chunk_size=128*1024):
+    h  = hashlib.sha256()
+    b  = bytearray(chunk_size)
+    mv = memoryview(b)
+    with open(path, 'rb', buffering=0) as f:
+        for n in iter(lambda : f.readinto(mv), 0):
+            h.update(mv[:n])
+    return h.hexdigest()
