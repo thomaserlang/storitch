@@ -32,7 +32,10 @@ class Base_handler(web.RequestHandler):
         try:
             return copy_to_permanent_store(temp_path, filename)
         finally:
-            os.remove(temp_path)
+            try:
+                os.remove(temp_path)
+            except OSError:
+                pass
 
     @property
     def executor(self):
