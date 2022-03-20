@@ -28,9 +28,9 @@ class Base_handler(web.RequestHandler):
         self.write_object(error)
 
     @run_on_executor
-    def copy_to_permanent_store(self, temp_path: str, filename: str) -> Dict[str, Any]:
+    def move_to_permanent_store(self, temp_path: str, filename: str) -> Dict[str, Any]:
         try:
-            return copy_to_permanent_store(temp_path, filename)
+            return move_to_permanent_store(temp_path, filename)
         finally:
             try:
                 os.remove(temp_path)
@@ -89,7 +89,7 @@ class Multipart_handler(Base_handler):
         )
         async with aiofiles.open(temp_path, 'wb', executor=self.executor) as f:
             await f.write(body)
-        return await self.copy_to_permanent_store(temp_path, filename)
+        return await self.move_to_permanent_store(temp_path, filename)
 
 @web.stream_request_body
 class Session_handler(Base_handler):
@@ -132,7 +132,7 @@ class Session_handler(Base_handler):
 
     async def put(self) -> None:
         if self.h_finished:
-            r = await self.copy_to_permanent_store(self.temp_path, self.h_filename)
+            r = await self.move_to_permanent_store(self.temp_path, self.h_filename)
             self.write_object(r)
         else:
             self.write_object({
@@ -191,25 +191,13 @@ class Download_handler(Base_handler):
         if thumbnail(path):
             return path
 
-def copy_to_permanent_store(temp_path: str, filename: str) -> Dict[str, Any]:
+def move_to_permanent_store(temp_path: str, filename: str) -> Dict[str, Any]:
     hash_ = utils.file_sha256(temp_path)
-    
-    dir = os.path.join(
-        config['store_path'],
-        utils.path_from_hash(hash_),
-    )
-    if not os.path.exists(dir):
-        os.makedirs(dir, mode=int(config['dir_mode'], 8))
-    path = os.path.join(dir, hash_)
-    if not os.path.exists(path):
-        shutil.move(temp_path, path)
-        os.chmod(path, int(config['file_mode'], 8))
-    
     extra = {
         'type': 'file',
     }
 
-    # If an image, extract it's width and hight
+    # If it's an image, extract its width and hight
     d = os.path.splitext(filename)
     if len(d) == 2:
         ext = d[1]
@@ -219,6 +207,19 @@ def copy_to_permanent_store(temp_path: str, filename: str) -> Dict[str, Any]:
                 wh['type'] = 'image'
                 if wh:
                     extra.update(wh)
+
+    dir = os.path.join(
+        config['store_path'],
+        utils.path_from_hash(hash_),
+    )
+    if not os.path.exists(dir):
+        os.makedirs(dir, mode=int(config['dir_mode'], 8))
+    
+    path = os.path.join(dir, hash_)
+    if not os.path.exists(path):
+        shutil.move(temp_path, path)
+        os.chmod(path, int(config['file_mode'], 8))
+    
     return {
         'stored': True,
         'filesize': os.stat(path).st_size,
