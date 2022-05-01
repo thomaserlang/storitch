@@ -2,11 +2,11 @@ import asyncio
 from typing import Union, Dict, List, Any, Tuple, Optional
 import json, os, re, shutil, mimetypes, good
 import uuid
-import aiofiles
 from tornado import web
 from storitch import utils, config
 from storitch.decorators import run_on_executor
 from wand import image, exceptions
+from aiofile import AIOFile, async_open
 
 class Base_handler(web.RequestHandler):
 
@@ -87,7 +87,7 @@ class Multipart_handler(Base_handler):
             config['temp_path'],
             str(uuid.uuid4()),
         )
-        async with aiofiles.open(temp_path, 'wb', executor=self.executor) as f:
+        async with async_open(temp_path, 'wb', executor=self.executor) as f:
             await f.write(body)
         return await self.move_to_permanent_store(temp_path, filename)
 
@@ -100,7 +100,7 @@ class Session_handler(Base_handler):
         good.Optional('session'): str,
     })
 
-    def prepare(self) -> None:
+    async def prepare(self) -> None:
         if 'application/octet-stream' not in self.request.headers.get('Content-Type').lower():
             raise web.HTTPError(400, 
                 'Content-Type must be application/octet-stream, was: {}'.format(
@@ -125,12 +125,14 @@ class Session_handler(Base_handler):
             config['temp_path'], 
             self.h_session
         )
+        self.afs = AIOFile(self.temp_path, 'ab', executor=self.executor)
+        await self.afs.open()
     
     async def data_received(self, chunk: bytes) -> None:
-        async with aiofiles.open(self.temp_path, 'ab', executor=self.executor) as f:
-            await f.write(chunk)
+        await self.afs.write(chunk)
 
     async def put(self) -> None:
+        await self.afs.close()
         if self.h_finished:
             r = await self.move_to_permanent_store(self.temp_path, self.h_filename)
             self.write_object(r)
@@ -176,16 +178,12 @@ class Download_handler(Base_handler):
             if not path:
                 self.write('Failed to create the thumbnail')
         self.set_header('Content-Type', self.get_content_type(path))
-        
-        async with aiofiles.open(path, 'rb', buffering=0) as f:
-            self.set_header('Content-Length', os.fstat(f.fileno()).st_size)
-            while True:
-                d = await f.read(128*1024)
-                if not d:
-                    break
-                self.write(d)
+        async with async_open(path, 'rb', executor=self.executor) as f:
+            self.set_header('Content-Length', os.fstat(f.file.fileno()).st_size)
+            async for chunk in f.iter_chunked(128*1024):
+                self.write(chunk)
                 await self.flush()
-
+                
     @run_on_executor
     def thumbnail(self, path: str) -> str:
         if thumbnail(path):

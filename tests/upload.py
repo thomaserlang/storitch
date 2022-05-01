@@ -63,6 +63,12 @@ def thumbnail():
     r = requests.get(
         'http://127.0.0.1:{}/1171aad9f52efe4f577ccabec4aaeb063e28a80978f3853721381bca2b5fe501@.jpg'.format(config['port']),
     )
+    logging.debug(r.content)
+    logging.debug(r.status_code)
+
+    r = requests.get(
+        'http://127.0.0.1:{}/1171aad9f52efe4f577ccabec4aaeb063e28a80978f3853721381bca2b5fe501'.format(config['port']),
+    )
     logging.debug(r.text)
     logging.debug(r.status_code)
     assert r.status_code == 200
