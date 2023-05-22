@@ -1,27 +1,22 @@
 import logging, logging.handlers, os
-from storitch import config
-from tornado import log
 
-class logger(object):
+def set_logger(filename, path: str = None, max_size: int = None, num_backups: int = None, level = 'INFO'):
+    logger = logging.getLogger()
+    logger.setLevel(level.upper())
 
-    @classmethod
-    def set_logger(cls, filename):
-        logger = logging.getLogger()
-        logger.setLevel(config['logging']['level'].upper())
-
-        format_ = log.LogFormatter(
-            '[%(color)s%(levelname)s%(end_color)s %(asctime)s %(module)s:%(lineno)d]: %(message)s', 
-            datefmt='%Y-%m-%d %H:%M:%S'
+    format_ = logging.Formatter(        
+        fmt='[%(asctime)s.%(msecs)-3d] %(levelname)-8s %(message)s (%(filename)s:%(lineno)d)',
+        datefmt='%Y-%m-%dT%H:%M:%S',
+    )
+    if path and filename:
+        channel = logging.handlers.RotatingFileHandler(
+            filename=os.path.join(path, filename),
+            maxBytes=max_size,
+            backupCount=num_backups
         )
-        if config['logging']['path'] and filename:
-            channel = logging.handlers.RotatingFileHandler(
-                filename=os.path.join(config['logging']['path'], filename),
-                maxBytes=config['logging']['max_size'],
-                backupCount=config['logging']['num_backups']
-            )
-            channel.setFormatter(format_)
-            logger.addHandler(channel)
-        else:# send to console instead of file
-            channel = logging.StreamHandler()
-            channel.setFormatter(format_)
-            logger.addHandler(channel)
+        channel.setFormatter(format_)
+        logger.addHandler(channel)
+    else:# send to console instead of file
+        channel = logging.StreamHandler()
+        channel.setFormatter(format_)
+        logger.addHandler(channel)

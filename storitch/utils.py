@@ -1,6 +1,6 @@
 import hashlib
 
-def path_from_hash(hash_, levels=2, length=2):
+def path_from_file_id(hash_, levels=2, length=2):
     '''
     1b4f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567014
 
@@ -38,11 +38,7 @@ def path_from_hash(hash_, levels=2, length=2):
         path.append(hash_[i*length:(i*length)+length])
     return '/'.join(path)
 
-def file_sha256(path, chunk_size=128*1024):
-    h  = hashlib.sha256()
-    b  = bytearray(chunk_size)
-    mv = memoryview(b)
-    with open(path, 'rb', buffering=0) as f:
-        for n in iter(lambda : f.readinto(mv), 0):
-            h.update(mv[:n])
-    return h.hexdigest()
+
+def file_sha256(path):
+    with open(path, 'rb') as f:
+        return hashlib.file_digest(f, 'sha256').hexdigest()

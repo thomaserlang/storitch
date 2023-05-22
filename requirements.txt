@@ -1,6 +1,7 @@
-tornado==6.1
+fastapi==0.95.1
 pyyaml==6.0
-wand==0.6.7
+wand==0.6.11
 click==8.0.1
-good==0.0.8
-aiofile==3.7.4
+aiofiles==23.1.0
+uvicorn==0.22.0
+python-multipart==0.0.6
