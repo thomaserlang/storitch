@@ -1,4 +1,4 @@
-tornado==6.1
+tornado==6.3.2
 pyyaml==6.0
 wand==0.6.7
 click==8.0.1
