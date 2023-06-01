@@ -1,9 +1,8 @@
 # Build:
 # docker build --rm -t thomaserlang/storitch --no-cache .
-# docker run 3000:3000 -v /var/storitch:/var/storitch thomaserlang/storitch
 # docker push thomaserlang/storitch:latest
 
-FROM python:3.10-slim-bullseye
+FROM python:3.11-slim-bullseye
 
 RUN apt-get update; apt-get upgrade -y; apt-get install libmagickwand-dev curl -y
 
