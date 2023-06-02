@@ -6,6 +6,7 @@ from fastapi.responses import FileResponse
 from starlette.concurrency import run_in_threadpool
 from wand import image, exceptions
 from .. import permanent_store
+from mimetypes import guess_type
 
 router = APIRouter()
 
@@ -23,6 +24,7 @@ async def download(
         if await aioos.stat(path):
             return FileResponse(
                 path=path,
+                media_type=guess_type(filename)[0] or 'application/octet-stream',
             )
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail='Not found')
