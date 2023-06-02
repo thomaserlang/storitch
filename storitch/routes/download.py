@@ -23,7 +23,6 @@ async def download(
         if await aioos.stat(path):
             return FileResponse(
                 path=path,
-                filename=filename,
             )
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail='Not found')
