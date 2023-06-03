@@ -24,7 +24,7 @@ async def download(
         if await aioos.stat(path):
             return FileResponse(
                 path=path,
-                media_type=guess_type(filename)[0] or 'application/octet-stream',
+                media_type=guess_type(filename or file_id)[0] or 'application/octet-stream',
             )
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail='Not found')
