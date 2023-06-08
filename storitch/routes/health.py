@@ -1,11 +1,11 @@
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, Response
 from fastapi.responses import PlainTextResponse
 import aiofiles
 from .. import config
 
 router = APIRouter()
 
-@router.post("/health", response_class=PlainTextResponse, status_code=200)
+@router.get("/health", response_class=PlainTextResponse)
 async def health(response: Response):
     path_exists = await aiofiles.os.path.exists(config.store_path)
     if not path_exists:

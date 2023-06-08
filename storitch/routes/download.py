@@ -1,5 +1,4 @@
 import re, os
-import logging
 from aiofiles import os as aioos
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse

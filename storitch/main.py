@@ -14,8 +14,9 @@ app = FastAPI()
 
 app.include_router(multipart.router)
 app.include_router(session.router)
-app.include_router(download.router)
 app.include_router(health.router)
+app.include_router(download.router)
+
 
 app.add_middleware(
     CORSMiddleware,
