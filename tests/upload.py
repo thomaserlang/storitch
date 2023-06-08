@@ -1,16 +1,19 @@
 import requests, json
 from storitch import config
 
+
 def upload_multipart():
     r = requests.post(
         f'http://127.0.0.1:{config.port}/store',
-        files={'file': open('./tests/test1.txt', 'rb')}
+        files={'file': open('./tests/test1.txt', 'rb')},
+        headers={'authorization': config.api_keys[0]},
     )
     r.raise_for_status()
     assert r.status_code == 201
     d = r.json()
     assert d[0]['hash'] == 'f29bc64a9d3732b4b9035125fdb3285f5b6455778edca72414671e0ca3b2e0de'
     assert d[0]['type'] == 'file'
+
 
 def upload_session():
     session = ''
@@ -26,8 +29,9 @@ def upload_session():
                     'X-Storitch': json.dumps({
                         'session': session,
                         'filename': 'testæøå.txt',
-                        'finished': False if d else True
-                    })
+                        'finished': False if d else True,
+                    }),
+                    'authorization': config.api_keys[0],
                 },
             )
             r = requests.post(**args) if start else requests.patch(**args)
@@ -42,10 +46,12 @@ def upload_session():
         assert j['type'] == 'file'
         assert j['filename'] == 'testæøå.txt'
 
+
 def thumbnail():
     r = requests.post(
         f'http://127.0.0.1:{config.port}/store',
-        files={'file': open('./tests/test.png', 'rb')}
+        files={'file': open('./tests/test.png', 'rb')},
+        headers={'authorization': config.api_keys[0]},
     )
     r.raise_for_status()
     assert r.status_code == 201
@@ -64,6 +70,7 @@ def thumbnail():
         f'http://127.0.0.1:{config.port}/{d[0]["file_id"]}',
     )
     assert r.status_code == 200, r.content
+
 
 if __name__ == '__main__':
     upload_multipart() 

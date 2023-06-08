@@ -17,6 +17,7 @@ class ConfigModel(BaseSettings):
     debug = False
     port = 3000
     store_path = '/var/storitch'
+    api_keys: list[str] = []
     logging = ConfigLoggingModel()
     image_exts = [
         '.jpg', '.jpeg', '.png', '.tiff', '.tif', '.gif',

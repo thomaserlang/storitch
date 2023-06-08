@@ -4,10 +4,11 @@ import uuid
 import os
 from aiofiles import os as aioos
 from typing import Annotated, Literal
-from fastapi import APIRouter, Header, Request, HTTPException
+from fastapi import APIRouter, Depends, Header, Request, HTTPException
 from starlette.concurrency import run_in_threadpool
 from ..permanent_store import create_store_folder, get_store_folder, upload_result
 from .. import schemas, utils
+from ..security import validate_api_key
 
 router = APIRouter()
 
@@ -17,6 +18,7 @@ async def session_upload_start(
     content_type: Annotated[Literal['application/octet-stream'], Header()],
     x_storitch: Annotated[str, Header()],
     request: Request,
+    api_key = Depends(validate_api_key),
 ):
     try:
         info = schemas.Session_upload_start.parse_obj(json.loads(x_storitch))
@@ -32,6 +34,7 @@ async def session_upload_append(
     content_type: Annotated[Literal['application/octet-stream'], Header()],
     x_storitch: Annotated[str, Header()],
     request: Request,
+    api_key = Depends(validate_api_key),
 ):
     try:
         info = schemas.Session_upload_append.parse_obj(json.loads(x_storitch))
