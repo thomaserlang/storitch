@@ -10,8 +10,43 @@ from mimetypes import guess_type
 
 router = APIRouter()
 
-@router.get('/{file_id}', response_class=FileResponse)
-@router.get('/{file_id}/{filename}', response_class=FileResponse)
+description = '''
+Download a file from the permanent store.
+
+To resize an image, add the arguments to the path.
+
+Specify the path and add a "@" followed by the arguments.
+
+Arguments can be specified as followed:
+
+    SXx         - Width, keeps aspect ratio
+    SYx         - Height, keeps aspect ration. 
+                  Ignored if SX is specified.
+    ROTATEx     - Number of degrees you wise to 
+                  rotate the image. Supports 
+                  negative numbers.
+    RESx        - Resolution, used for PDF 
+                  files, the higher the number,
+                  the better the quality.
+    PAGEx       - Page index in the PDF document.
+
+The file format can be specified by ending the path with
+E.g. .jpg, .png, .tiff, etc.
+
+The arguments can be separated with _ or just
+don't separate them. Works either way. 
+
+Example:
+
+    /b12ece41-919b-46ef-96b8-703af0f1b5ac@SX1024_ROTATE90.png
+
+Resizes the image to a width of 1024, rotates it 90 degrees and converts 
+it to a PNG file.
+'''
+
+
+@router.get('/{file_id}', response_class=FileResponse, description=description)
+@router.get('/{file_id}/{filename}', response_class=FileResponse, description=description)
 async def download(
     file_id: str,
     filename: str = None,
@@ -37,32 +72,6 @@ def thumbnail(path: str):
     This allows us to easily get the original file, make the changes,
     save the file with the full path, so the server never has to do
     the operation again, as long as the arguments are precisely the same.
-
-    Arguments can be specified as followed:
-
-        SXx         - Width, keeps aspect ratio
-        SYx         - Height, keeps aspect ration. 
-                      Ignored if SX is specified.
-        ROTATEx     - Number of degrees you wise to 
-                      rotate the image. Supports 
-                      negative numbers.
-        RESx        - Resolution, used for PDF 
-                      files, the higher the number,
-                      the better the quality.
-        PAGEx       - Page index in the PDF document.
-
-    The file format can be specified by ending the path with
-    E.g. .jpg, .png, .tiff, etc.
-
-    The arguments can be separated with _ or just
-    don't separate them. Works either way. 
-
-    Example:
-
-        /foo/14bc...@SX1024_ROTATE90.png
-
-    Resizes the image to a width of 1024, rotates it 90 degrees and converts 
-    it to a PNG file.
     '''
     p = path.split('@')
     if len(p) != 2:

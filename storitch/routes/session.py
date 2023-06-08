@@ -4,7 +4,7 @@ import uuid
 import os
 from aiofiles import os as aioos
 from typing import Annotated, Literal
-from fastapi import APIRouter, Depends, Header, Request, HTTPException
+from fastapi import APIRouter, Depends, Security, Header, Request, HTTPException
 from starlette.concurrency import run_in_threadpool
 from ..permanent_store import create_store_folder, get_store_folder, upload_result
 from .. import schemas, utils
@@ -13,12 +13,27 @@ from ..security import validate_api_key
 router = APIRouter()
 
 
-@router.post("/store/session", response_model=schemas.Upload_result | schemas.Session_result, status_code=201)
+@router.post("/store/session", 
+    response_model=schemas.Session_result | schemas.Upload_result, 
+    status_code=201,
+    description='''
+Specify header X-Storitch header with a JSON encoded string to start a session upload:
+    
+    {
+        "filename": "filename.txt",
+        "finished": false
+    }
+
+For chunked uploads, finished should be false for all but the last chunk.
+
+The response will contain a session ID that should be used for subsequent chunks.
+'''
+)
 async def session_upload_start(
     content_type: Annotated[Literal['application/octet-stream'], Header()],
-    x_storitch: Annotated[str, Header()],
+    x_storitch: Annotated[str, Header(description='JSON encoded string')],
     request: Request,
-    api_key = Depends(validate_api_key),
+    api_key: Annotated[str, Security(validate_api_key)],
 ):
     try:
         info = schemas.Session_upload_start.parse_obj(json.loads(x_storitch))
@@ -29,12 +44,29 @@ async def session_upload_start(
     return await save(request, file_id, info.filename, info.finished, True)
 
 
-@router.patch("/store/session", response_model=schemas.Upload_result | schemas.Session_result, status_code=200)
+@router.patch("/store/session", 
+    response_model=schemas.Upload_result | schemas.Session_result, 
+    status_code=200,
+    description='''
+
+Specify header X-Storitch header with a JSON encoded string to continue a session upload:
+    
+    {
+        "session": "session_id",
+        "filename": "filename.txt",
+        "finished": false
+    }
+
+`finished` should be false for all but the last chunk.
+
+When finished, the response will contain the file_id of the file.
+'''
+)
 async def session_upload_append(
     content_type: Annotated[Literal['application/octet-stream'], Header()],
     x_storitch: Annotated[str, Header()],
     request: Request,
-    api_key = Depends(validate_api_key),
+    api_key: Annotated[str, Security(validate_api_key)],
 ):
     try:
         info = schemas.Session_upload_append.parse_obj(json.loads(x_storitch))

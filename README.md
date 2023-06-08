@@ -1,29 +1,10 @@
-Storitch
-========
+# Storitch API Documentation
+Storitch is a simple way to upload files be it a multipart form upload or of a big file in bulk using session uploads.
+It's recommended running Storitch behind a reverse proxy like Nginx.
 
-Upload the file to `POST /store` and Storitch returns the file's hash 
-and if it was stored or not.
 
-```js
-[
-    {
-        "filename": "2014-07-22 01.11.57.jpg",
-        "stored": true,
-        "filesize": 2498203,
-        "hash": "1de3dd0383e78e3503b5eacf68db7c5cc524ee25500a11c8f4cd793c475b4c31",
-        "height": 2448,
-        "width": 3264,
-        "type": "image"
-    }
-]
-```
-
-To retrieve the file you simply specify it's hash: `GET /<hash>`.
-
-If the file is an image you can resize, rotate and/or format it.
-Storitch uses imagemagick for this.
-
-Specify the hash and add a "@" followed by the arguments.
+## Image manipulation
+Images can be resized and rotated using the @ arguments.
 
 Arguments can be specified as followed:
 
@@ -39,47 +20,62 @@ Arguments can be specified as followed:
     PAGEx       - Page index in the PDF document.
 
 The file format can be specified by ending the path with
-E.g. `.jpg`, `.png`, `.tiff`, etc.
+E.g. .jpg, .png, .tiff, etc.
 
-The arguments can be separated with _ or just don't separate them. 
-Works either way. 
+The arguments can be separated with _ or just don't separate them. Works either way. 
 
 Example:
 
-    GET /14bc...@SX1024_ROTATE90.png
+    https://storitch.local/b12ece41-919b-46ef-96b8-703af0f1b5ac@SX1024_ROTATE90.png
 
 Resizes the image to a width of 1024, rotates it 90 degrees and converts 
-it to an PNG file.
+it to a PNG file.
 
-# Installation
+The resized image will be stored next to the original file with the arguments added to the filename for caching.
 
-Create a user with no login right.
 
-    sudo useradd -r storitch -s /bin/false
+## Multipart form upload
+Path: `POST /store`    
+Required headers:  
+* `Content-Type: multipart/form-data`
+* `Authorization: API_KEY`
 
-Install Storitch.
+Use the field: `file` to upload the file.
 
+
+## Bulk session upload
+To start a session upload.  
+
+Path: `POST /store/session`    
+Required headers:  
+* `Content-Type: application/octet-stream`
+* `X-Storitch: json encoded string: {"filename": "filename.ext",  "finished": false}`
+* `Authorization: API_KEY`
+
+Will return a session id.
+```json
+{
+    "session_id": "b12ece41-919b-46ef-96b8-703af0f1b5ac"
+}
 ```
-sudo apt-get install python-virtualenv python-dev supervisor nginx libmagickwand-dev
-mkdir /virtualenv
-virtualenv /virtualenv/storitch
-source /virtualenv/storitch/bin/activate
-pip install https://github.com/thomaserlang/storitch/archive/master.zip
-```
 
-Create a config for Storitch.
+### To append a chunk:
+Path: `Patch /store/session`
+Required headers:  
+* `Content-Type: application/octet-stream`
+* `X-Storitch: json encoded string: {"session_id": "b12ece41-919b-46ef-96b8-703af0f1b5ac", "finished": true, "session_id": "b12ece41-919b-46ef-96b8-703af0f1b5ac"}`
+* `Authorization: API_KEY`
 
-```
-sudo touch /etc/storitch.yaml
-sudo chown root:storitch /etc/storitch.yaml
-sudo chmod 750 /etc/storitch.yaml
-sudo nano /etc/storitch.yaml
-```
+If finished is true an object containing the file_id will be returned.
 
-Insert the following:
-
-```yaml
-store_path: /var/storitch
-logging:
-    path: /var/log/storitch
+```json
+  {
+    "file_size": 1337,
+    "filename": "filename.ext",
+    "hash": "sha256",
+    "file_id": "b12ece41-919b-46ef-96b8-703af0f1b5ac",
+    "type": "file",
+    "width": 1920,
+    "height": 1080
+  }
 ```
