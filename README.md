@@ -40,7 +40,22 @@ Required headers:
 * `Content-Type: multipart/form-data`
 * `Authorization: API_KEY`
 
-Use the field: `file` to upload the file.
+Use the field: `file` to upload one or more files.  
+Returns a list:  
+```json
+[
+  {
+    "file_size": 1337,
+    "filename": "filename.ext",
+    "hash": "sha256",
+    "file_id": "b12ece41-919b-46ef-96b8-703af0f1b5ac",
+    "type": "image",
+    "width": 1920,
+    "height": 1080
+  }
+]
+```
+
 
 
 ## Bulk session upload
@@ -74,7 +89,7 @@ If finished is true an object containing the file_id will be returned.
     "filename": "filename.ext",
     "hash": "sha256",
     "file_id": "b12ece41-919b-46ef-96b8-703af0f1b5ac",
-    "type": "file",
+    "type": "image",
     "width": 1920,
     "height": 1080
   }
