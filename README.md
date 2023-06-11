@@ -1,5 +1,5 @@
 # Storitch API Documentation
-Storitch is a simple way to upload files be it a multipart form upload or of a big file in bulk using session uploads.
+Storitch is a simple way to upload big or small files using either multipart or chunked uploads.
 It's recommended running Storitch behind a reverse proxy like Nginx.
 
 
