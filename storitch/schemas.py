@@ -1,5 +1,6 @@
 from typing import Literal
-from pydantic import BaseModel
+from pydantic import BaseModel, constr
+
 
 class Upload_result(BaseModel):
     file_size: int
@@ -16,7 +17,7 @@ class Session_upload_start(BaseModel):
     finished: bool
 
 class Session_upload_append(BaseModel):
-    session: str
+    session: constr(min_length=36, max_length=36, regex='^[0-9a-fA-F-]+$')
     filename: str
     finished: bool
 
