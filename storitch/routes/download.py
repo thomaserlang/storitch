@@ -1,4 +1,4 @@
-import re, os
+import re, os, logging
 from aiofiles import os as aioos
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
@@ -46,11 +46,12 @@ async def download(
         if not await run_in_threadpool(thumbnail, path):
             raise HTTPException(status_code=400, detail='Invalid thumbnail arguments.')
     try:
-        if await aioos.stat(path):
-            return FileResponse(
-                path=path,
-                media_type=guess_type(filename or file_id)[0] or 'application/octet-stream',
-            )
+        stat = await aioos.stat(path)
+        return FileResponse(
+            path=path,
+            stat_result=stat,
+            media_type=guess_type(filename or file_id)[0] or 'application/octet-stream',
+        )
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail='Not found')
 
@@ -70,11 +71,10 @@ def thumbnail(path: str):
         return True
     if len(p[1]) > 40:
         raise HTTPException(status_code=400, detail='Parameters too long, max 40.')
-
     size_match, format_match = __parse_arguments(p[1])
-
     try:
-        with image.Image(filename=p[0]) as img:
+        # "[0]" is to limit to the first image if e.g. the file is a dicom and contains multiple images
+        with image.Image(filename=p[0]+"[0]") as img:
             if size_match:
                 # resize, keep aspect ratio
                 if size_match.group(1) != None:# width
@@ -87,6 +87,13 @@ def thumbnail(path: str):
         return True
     except exceptions.BlobError:
         raise HTTPException(status_code=404, detail='Not found')
+    except exceptions.PolicyError as e:
+        logging.error(f'{path}: {str(e)}')
+        return False
+    except exceptions.ResourceLimitError as e:
+        logging.error(f'{path}: {str(e)}')
+        return False
+
 
 def __parse_arguments(arguments: str):
     size_match = re.search(

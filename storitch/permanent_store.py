@@ -1,9 +1,9 @@
-import os, uuid
+import os, uuid, logging
 import hashlib
 import aiofiles
 from aiofiles import os as aioos
 from starlette.concurrency import run_in_threadpool
-from wand import image
+from wand import image, exceptions
 from . import utils, schemas, config
 
 
@@ -85,5 +85,11 @@ def image_width_high(path):
     try:
         with image.Image(filename=path) as img:
             return (img.width, img.height)
-    except Exception:
+    except exceptions.PolicyError as e:
+        logging.error(f'{path}: {str(e)}')
+        return (None, None)
+    except exceptions.ResourceLimitError as e:
+        logging.error(f'{path}: {str(e)}')
+        return (None, None)
+    except Exception as e:
         return (None, None)
