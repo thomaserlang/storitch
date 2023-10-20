@@ -21,13 +21,6 @@ Arguments can be specified as followed:
     SXx         - Width, keeps aspect ratio
     SYx         - Height, keeps aspect ration. 
                   Ignored if SX is specified.
-    ROTATEx     - Number of degrees you wise to 
-                  rotate the image. Supports 
-                  negative numbers.
-    RESx        - Resolution, used for PDF 
-                  files, the higher the number,
-                  the better the quality.
-    PAGEx       - Page index in the PDF document.
 
 The file format can be specified by ending the path with
 E.g. .jpg, .png, .tiff, etc.
@@ -42,8 +35,6 @@ Example:
 Resizes the image to a width of 1024, rotates it 90 degrees and converts 
 it to a PNG file.
 '''
-
-
 @router.get('/{file_id}', response_class=FileResponse, description=description)
 @router.get('/{file_id}/{filename}', response_class=FileResponse, description=description)
 async def download(
@@ -80,33 +71,16 @@ def thumbnail(path: str):
     if len(p[1]) > 40:
         raise HTTPException(status_code=400, detail='Parameters too long, max 40.')
 
-    size_match, rotate_match, resolution_match, \
-        page_match, format_match = __parse_arguments(p[1])
-
-    # a specific page in a PDF document
-    if page_match and page_match.group(1) != None:
-        page = '[{}]'.format(page_match.group(1))
-    else:
-        # Prevent a dicom file or pdf file from extracting multiple images
-        page = '[0]'
-
-    o = {
-        'filename': p[0]+page
-    }
-    if resolution_match and resolution_match.group(1) != None:
-        o['resolution'] = int(resolution_match.group(1))
+    size_match, format_match = __parse_arguments(p[1])
 
     try:
-        with image.Image(**o) as img:
+        with image.Image(filename=p[0]) as img:
             if size_match:
                 # resize, keep aspect ratio
                 if size_match.group(1) != None:# width
                     img.transform(resize=size_match.group(1))
                 elif size_match.group(2) != None:# height
                     img.transform(resize='x'+size_match.group(2))
-            if rotate_match:
-                if rotate_match.group(1) != None:
-                    img.rotate(int(rotate_match.group(1)))
             if format_match:
                 img.format = format_match.group(1)
             img.save(filename=path)
@@ -120,21 +94,6 @@ def __parse_arguments(arguments: str):
         arguments,
         re.I
     )
-    rotate_match = re.search(
-        r'ROTATE(-?[0-9]+)',
-        arguments,
-        re.I
-    )
-    resolution_match = re.search(
-        r'RES([0-9]+)',
-        arguments,
-        re.I
-    )
-    page_match = re.search(
-        r'PAGE([0-9]+)',
-        arguments,
-        re.I
-    )
     format_match = re.search(
         r'\.([a-z0-9]{2,5})',
         arguments,
@@ -142,8 +101,5 @@ def __parse_arguments(arguments: str):
     )
     return (
         size_match,
-        rotate_match,
-        resolution_match,
-        page_match,
         format_match,
     )
