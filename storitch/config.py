@@ -2,37 +2,39 @@ import logging
 import os, yaml, tempfile
 import pathlib
 from typing import Literal
-from pydantic import BaseModel, BaseSettings
+from pydantic import BaseModel, ConfigDict
+from pydantic_settings import BaseSettings
 from . import logger
 
 logger.set_logger(None)
 
 class ConfigLoggingModel(BaseModel):
     level: Literal['notset', 'debug', 'info', 'warn', 'error', 'critical'] = 'warn'
-    path: pathlib.Path = None
+    path: pathlib.Path | None = None
     max_size: int = 100 * 1000 * 1000 # ~ 95 mb
-    num_backups = 10
+    num_backups: int = 10
 
 class ConfigModel(BaseSettings):
-    debug = False
-    port = 3000
-    store_path = '/var/storitch'
+    debug: bool = False
+    port: int = 3000
+    store_path: str = '/var/storitch'
     api_keys: list[str] = []
-    logging = ConfigLoggingModel()
-    image_exts = [
+    logging: ConfigLoggingModel = ConfigLoggingModel()
+    image_exts: list[str] = [
         '.jpg', '.jpeg', '.png', '.tiff', '.tif', '.gif',
         '.bmp', '.bmp2', '.bmp3', '.dcm', '.dicom', '.webp',
         '.heic',
     ]
-    dir_mode = '755'
-    file_mode = '444'
-    temp_path = tempfile.gettempdir()    
+    dir_mode: str = '755'
+    file_mode: str = '444'
+    temp_path: str = tempfile.gettempdir()
 
-    class Config:
-        env_prefix = 'storitch_'
-        env_nested_delimiter = '.'
-        validate_assignment = True
-        case_sensitive = False
+    model_config = ConfigDict(
+        env_prefix='storitch_',
+        env_nested_delimiter='.',
+        validate_assignment=True,
+        case_sensitive=False,
+    )
 
 config: ConfigModel
 
