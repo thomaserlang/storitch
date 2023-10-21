@@ -4,7 +4,7 @@ import uuid
 import os
 from aiofiles import os as aioos
 from typing import Annotated, Literal
-from fastapi import APIRouter, Depends, Security, Header, Request, HTTPException
+from fastapi import APIRouter, Security, Header, Request, HTTPException
 from starlette.concurrency import run_in_threadpool
 from ..permanent_store import create_store_folder, get_store_folder, upload_result
 from .. import schemas, utils
@@ -36,7 +36,7 @@ async def session_upload_start(
     api_key: Annotated[str, Security(validate_api_key)],
 ):
     try:
-        info = schemas.Session_upload_start.parse_obj(json.loads(x_storitch))
+        info = schemas.Session_upload_start.model_validate(json.loads(x_storitch))
     except json.decoder.JSONDecodeError:
         raise HTTPException(status_code=400, detail='Invalid JSON in X-Storitch header')    
     
@@ -48,7 +48,6 @@ async def session_upload_start(
     response_model=schemas.Upload_result | schemas.Session_result, 
     status_code=200,
     description='''
-
 Specify header X-Storitch header with a JSON encoded string to continue a session upload:
     
     {
@@ -69,7 +68,7 @@ async def session_upload_append(
     api_key: Annotated[str, Security(validate_api_key)],
 ):
     try:
-        info = schemas.Session_upload_append.parse_obj(json.loads(x_storitch))
+        info = schemas.Session_upload_append.model_validate(json.loads(x_storitch))
     except json.decoder.JSONDecodeError:
         raise HTTPException(status_code=400, detail='Invalid JSON in X-Storitch header')    
 
