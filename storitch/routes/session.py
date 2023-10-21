@@ -9,6 +9,7 @@ from starlette.concurrency import run_in_threadpool
 from ..permanent_store import create_store_folder, get_store_folder, upload_result
 from .. import schemas, utils
 from ..security import validate_api_key
+from .. import config
 
 router = APIRouter()
 
@@ -76,17 +77,20 @@ async def session_upload_append(
 
 
 async def save(request: Request, file_id: str, filename: str, finished: bool, new: bool):
-    path = os.path.join(
-        get_store_folder(file_id),
-        f'{file_id}_temp',
+    temp_path = os.path.join(
+        config.temp_path,
+        file_id,
     )
     if new:
         await create_store_folder(file_id)
-    async with aiofiles.open(path, mode='wb' if new else 'ab') as f:
+    async with aiofiles.open(temp_path, mode='wb' if new else 'ab') as f:
         async for chunk in request.stream():
             await f.write(chunk)
     if finished:
-        hash_ = await run_in_threadpool(utils.file_sha256, path)
-        await aioos.rename(path, path[:-len('_temp')])
+        hash_ = await run_in_threadpool(utils.file_sha256, temp_path)
+        await aioos.rename(
+            temp_path,
+            os.path.join(get_store_folder(file_id), file_id),
+        )
         return await upload_result(file_id, hash_, filename)
     return schemas.Session_result(session=file_id)

@@ -25,7 +25,7 @@ class ConfigModel(BaseSettings):
     ]
     dir_mode: str = '755'
     file_mode: str = '444'
-    temp_path: str = tempfile.gettempdir()
+    temp_path: str = '/var/storitch/tmp'
 
     model_config = ConfigDict(
         env_prefix='storitch_',
@@ -67,6 +67,10 @@ else:
 
 os.makedirs(config.temp_path, exist_ok=True)
 tempfile.tempdir = config.temp_path
+# Test that we can write to the temp dir
+t = tempfile.TemporaryDirectory()
+t.cleanup()
+
 logger.set_logger(
     filename=f'storitch-{config.port}.log',
     path=config.logging.path,
