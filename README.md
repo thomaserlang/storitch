@@ -29,8 +29,8 @@ The resized image will be stored next to the original file with the arguments ad
 ## Multipart form upload
 Path: `POST /store`    
 Required headers:  
-* `Content-Type: multipart/form-data`
 * `Authorization: API_KEY`
+* `Content-Type: multipart/form-data`
 
 Use the field: `file` to upload one or more files.  
 Returns a list:  
@@ -40,7 +40,7 @@ Returns a list:
     "file_size": 1337,
     "filename": "filename.ext",
     "hash": "sha256",
-    "file_id": "b12ece41-919b-46ef-96b8-703af0f1b5ac",
+    "file_id": "10a83e6b-bb3a-4bce-b8e0-ec430ef0e7c2",
     "type": "image",
     "width": 1920,
     "height": 1080
@@ -54,24 +54,39 @@ Returns a list:
 To start a session upload.  
 
 Path: `POST /store/session`    
-Required headers:  
-* `Content-Type: application/octet-stream`
-* `X-Storitch: json encoded string: {"filename": "filename.ext",  "finished": false}`
+Headers:  
 * `Authorization: API_KEY`
+* `Content-Type: application/octet-stream`
+* `X-Finished: true or false`
+* `X-Filename`
 
-Will return a session id.
+Will return a session id or an object containing the file_id if finished is true.
 ```json
 {
-    "session_id": "b12ece41-919b-46ef-96b8-703af0f1b5ac"
+    "session": "b12ece41-919b-46ef-96b8-703af0f1b5ac"
 }
+```
+Or
+```json
+  {
+    "file_size": 1337,
+    "filename": "filename.ext",
+    "hash": "sha256",
+    "file_id": "10a83e6b-bb3a-4bce-b8e0-ec430ef0e7c2",
+    "type": "image",
+    "width": 1920,
+    "height": 1080
+  }
 ```
 
 ### To append a chunk:
 Path: `Patch /store/session`
-Required headers:  
-* `Content-Type: application/octet-stream`
-* `X-Storitch: json encoded string: {"session_id": "b12ece41-919b-46ef-96b8-703af0f1b5ac", "finished": true, "session_id": "b12ece41-919b-46ef-96b8-703af0f1b5ac"}`
+Headers:  
 * `Authorization: API_KEY`
+* `Content-Type: application/octet-stream`
+* `X-Session`
+* `X-Filename`
+* `X-Finished: true or false`
 
 If finished is true an object containing the file_id will be returned.
 
@@ -80,9 +95,15 @@ If finished is true an object containing the file_id will be returned.
     "file_size": 1337,
     "filename": "filename.ext",
     "hash": "sha256",
-    "file_id": "b12ece41-919b-46ef-96b8-703af0f1b5ac",
+    "file_id": "10a83e6b-bb3a-4bce-b8e0-ec430ef0e7c2",
     "type": "image",
     "width": 1920,
     "height": 1080
   }
+```
+Or
+```json
+{
+    "session": "b12ece41-919b-46ef-96b8-703af0f1b5ac"
+}
 ```
