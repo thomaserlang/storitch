@@ -6,8 +6,6 @@ from pydantic import BaseModel, ConfigDict
 from pydantic_settings import BaseSettings
 from . import logger
 
-logger.set_logger(None)
-
 class ConfigLoggingModel(BaseModel):
     level: Literal['notset', 'debug', 'info', 'warn', 'error', 'critical'] = 'warn'
     path: pathlib.Path | None = None

@@ -11,13 +11,6 @@ Arguments can be specified as followed:
     SXx         - Width, keeps aspect ratio
     SYx         - Height, keeps aspect ration. 
                   Ignored if SX is specified.
-    ROTATEx     - Number of degrees you wise to 
-                  rotate the image. Supports 
-                  negative numbers.
-    RESx        - Resolution, used for PDF 
-                  files, the higher the number,
-                  the better the quality.
-    PAGEx       - Page index in the PDF document.
 
 The file format can be specified by ending the path with
 E.g. .jpg, .png, .tiff, etc.
@@ -26,10 +19,9 @@ The arguments can be separated with _ or just don't separate them. Works either 
 
 Example:
 
-    https://storitch.local/b12ece41-919b-46ef-96b8-703af0f1b5ac@SX1024_ROTATE90.png
+    https://storitch.local/b12ece41-919b-46ef-96b8-703af0f1b5ac@SX1024.png
 
-Resizes the image to a width of 1024, rotates it 90 degrees and converts 
-it to a PNG file.
+Resizes the image to a width of 1024 and converts it to a PNG file.
 
 The resized image will be stored next to the original file with the arguments added to the filename for caching.
 

@@ -83,13 +83,8 @@ def get_file_path(file_id):
 
 def image_width_high(path):
     try:
-        with image.Image(filename=path) as img:
+        with image.Image(filename=f'{path}[0]') as img:
             return (img.width, img.height)
-    except exceptions.PolicyError as e:
-        logging.error(f'{path}: {str(e)}')
-        return (None, None)
-    except exceptions.ResourceLimitError as e:
-        logging.error(f'{path}: {str(e)}')
-        return (None, None)
     except Exception as e:
+        logging.error(f'{path}: {str(e)}')
         return (None, None)

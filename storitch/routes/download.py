@@ -1,9 +1,8 @@
+import asyncio
 import re, os, logging
 from aiofiles import os as aioos
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
-from starlette.concurrency import run_in_threadpool
-from wand import image, exceptions
 from .. import permanent_store
 from mimetypes import guess_type
 
@@ -43,8 +42,8 @@ async def download(
 ):
     path = permanent_store.get_file_path(file_id)
     if '@' in file_id:
-        if not await run_in_threadpool(thumbnail, path):
-            raise HTTPException(status_code=400, detail='Invalid thumbnail arguments.')
+        if not await convert(path):
+            raise HTTPException(status_code=500, detail='Failed to convert file.')
     try:
         stat = await aioos.stat(path)
         return FileResponse(
@@ -56,7 +55,7 @@ async def download(
         raise HTTPException(status_code=404, detail='Not found')
 
 
-def thumbnail(path: str):
+async def convert(path: str):
     '''
     Specify the path and add a "@" followed by the arguments.
 
@@ -66,33 +65,37 @@ def thumbnail(path: str):
     '''
     p = path.split('@')
     if len(p) != 2:
-        return False
+        raise HTTPException(status_code=400, detail='Invalid thumbnail arguments.')
     if os.path.exists(path):
         return True
     if len(p[1]) > 40:
         raise HTTPException(status_code=400, detail='Parameters too long, max 40.')
-    size_match, format_match = __parse_arguments(p[1])
-    try:
-        # "[0]" is to limit to the first image if e.g. the file is a dicom and contains multiple images
-        with image.Image(filename=p[0]+"[0]") as img:
-            if size_match:
-                # resize, keep aspect ratio
-                if size_match.group(1) != None:# width
-                    img.transform(resize=size_match.group(1))
-                elif size_match.group(2) != None:# height
-                    img.transform(resize='x'+size_match.group(2))
-            if format_match:
-                img.format = format_match.group(1)
-            img.save(filename=path)
-        return True
-    except exceptions.BlobError:
-        raise HTTPException(status_code=404, detail='Not found')
-    except exceptions.PolicyError as e:
-        logging.error(f'{path}: {str(e)}')
+    size_match, _ = __parse_arguments(p[1])   
+    
+    args = []
+    if size_match:
+        # resize, keep aspect ratio
+        if size_match.group(1) != None:# width
+            args.append('-resize')
+            args.append(f'{size_match.group(1)}x')
+        elif size_match.group(2) != None:# height
+            args.append('-resize')
+            args.append(f'x{size_match.group(2)}')
+
+    # "[0]" is to limit to the first image if e.g. the file is a dicom and contains multiple images
+    p = await asyncio.subprocess.create_subprocess_exec(
+        'convert',
+        f'{p[0]}[0]',
+        *args,
+        path,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    _, error = await p.communicate()
+    if error:            
+        logging.error(f'{path}: {str(error.decode())}')
         return False
-    except exceptions.ResourceLimitError as e:
-        logging.error(f'{path}: {str(e)}')
-        return False
+    return True
 
 
 def __parse_arguments(arguments: str):
