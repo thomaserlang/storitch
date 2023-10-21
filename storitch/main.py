@@ -10,7 +10,11 @@ from .routes import (
     health,
 )
 
-app = FastAPI()
+app = FastAPI(
+    title='Storitch',
+    description='A simple file storage service and thumbnail generator.',
+    version='2.1',
+)
 
 app.include_router(multipart.router)
 app.include_router(session.router)

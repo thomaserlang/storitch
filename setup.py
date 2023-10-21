@@ -7,11 +7,11 @@ with open('requirements.txt') as f:
 
 setup(
     name='Storitch',
-    version='1.0.7',
+    version='2.1',
     author='Thomas Erlang',
     author_email='thomas@erlang.dk',
     url='https://github.com/thomaserlang/storitch',
-    description='File upload and thumbnail generator',
+    description='A simple file storage service and thumbnail generator.',
     long_description=__doc__,
     packages=find_packages(),
     zip_safe=False,
