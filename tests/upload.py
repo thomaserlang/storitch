@@ -6,10 +6,9 @@ def upload_multipart():
     r = requests.post(
         f'http://127.0.0.1:{config.port}/store',
         files={'file': open('./tests/test1.txt', 'rb')},
-        headers={'authorization': config.api_keys[0]},
+        headers={'Authorization': config.api_keys[0]},
     )
-    r.raise_for_status()
-    assert r.status_code == 201
+    assert r.status_code == 201, r.content
     d = r.json()
     assert d[0]['hash'] == 'f29bc64a9d3732b4b9035125fdb3285f5b6455778edca72414671e0ca3b2e0de'
     assert d[0]['type'] == 'file'
@@ -26,17 +25,15 @@ def upload_session():
                 data=d,
                 headers={
                     'Content-Type': 'application/octet-stream',
-                    'X-Storitch': json.dumps({
-                        'session': session,
-                        'filename': 'testæøå.txt',
-                        'finished': False if d else True,
-                    }),
-                    'authorization': config.api_keys[0],
+                    'X-Session': session,
+                    'X-Filename': 'testæøå.txt',
+                    'X-Finished': 'false' if d else 'true',
+                    'Authorization': config.api_keys[0],
                 },
             )
             r = requests.post(**args) if start else requests.patch(**args)
             start = False
-            r.raise_for_status()
+            assert r.status_code < 400, r.content
             j = r.json()
             if 'session' in j:
                 session = j['session']
@@ -51,10 +48,9 @@ def thumbnail():
     r = requests.post(
         f'http://127.0.0.1:{config.port}/store',
         files={'file': open('./tests/test.png', 'rb')},
-        headers={'authorization': config.api_keys[0]},
+        headers={'Authorization': config.api_keys[0]},
     )
-    r.raise_for_status()
-    assert r.status_code == 201
+    assert r.status_code == 201, r.content
     d = r.json()
     assert d[0]['hash'] == '1171aad9f52efe4f577ccabec4aaeb063e28a80978f3853721381bca2b5fe501'
     assert d[0]['type'] == 'image'
