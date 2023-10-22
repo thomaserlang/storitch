@@ -4,6 +4,8 @@ from aiofiles import os as aioos
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 from mimetypes import guess_type
+
+from pydantic import constr
 from .. import permanent_store
 
 router = APIRouter()
@@ -37,7 +39,7 @@ it to a PNG file.
 @router.get('/{file_id}', response_class=FileResponse, description=description)
 @router.get('/{file_id}/{filename}', response_class=FileResponse, description=description)
 async def download(
-    file_id: str,
+    file_id: constr(pattern=r'[a-zA-Z0-9-]+(@[a-zA-Z0-9_-.]+)?'),
     filename: str = None,
 ):
     path = permanent_store.get_file_path(file_id)
