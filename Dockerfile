@@ -28,6 +28,7 @@ RUN pip install -r requirements.txt
 RUN addgroup --gid $GID --system storitch; adduser --uid $UID --system --gid $GID storitch; \
     mkdir /var/storitch && chown storitch:storitch /var/storitch
 USER $UID:$GID
+RUN mkdir /tmp/imagemagick
 
 VOLUME /var/storitch
 ENTRYPOINT ["python", "storitch/runner.py"]

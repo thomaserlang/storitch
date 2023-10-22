@@ -21,7 +21,7 @@ class ConfigModel(BaseSettings):
     image_exts: list[str] = [
         '.jpg', '.jpeg', '.png', '.tiff', '.tif', '.gif',
         '.bmp', '.bmp2', '.bmp3', '.dcm', '.dicom', '.webp',
-        '.heic',
+        '.heic', '.heif', '.avif'
     ]
     dir_mode: str = '755'
     file_mode: str = '444'

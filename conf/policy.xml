@@ -12,6 +12,7 @@
 <!ATTLIST policy value CDATA #IMPLIED>
 ]>
 <policymap>
+  <policy domain="resource" name="temporary-path" value="/tmp/imagemagick"/>
   <!-- Set maximum parallel threads. -->
   <policy domain="resource" name="thread" value="2"/>
   <!-- Set maximum time in seconds or neumonics, e.g. "2 minutes". When this
@@ -71,7 +72,7 @@
   <!-- Deny all image modules and specifically exempt reading or writing
        web-safe image formats. -->
   <policy domain="module" rights="none" pattern="*" />
-  <policy xmlns="" domain="module" rights="read | write" pattern="{BMP,GIF,JPEG,PNG,TIFF,WEBP,HEIC,AVIF,DCM}"/>
+  <policy domain="module" rights="read | write" pattern="{BMP,GIF,JPEG,PNG,TIFF,WEBP,HEIC,AVIF,DCM}"/>
   <!-- This policy sets the number of times to replace content of certain
        memory buffers and temporary files before they are freed or deleted. -->
   <policy domain="system" name="shred" value="1"/>

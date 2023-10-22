@@ -3,8 +3,8 @@ import re, os, logging
 from aiofiles import os as aioos
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
-from .. import permanent_store
 from mimetypes import guess_type
+from .. import permanent_store
 
 router = APIRouter()
 
@@ -70,7 +70,8 @@ async def convert(path: str):
         return True
     if len(p[1]) > 40:
         raise HTTPException(status_code=400, detail='Parameters too long, max 40.')
-    size_match, _ = __parse_arguments(p[1])   
+
+    size_match, = __parse_arguments(p[1])
     
     args = []
     if size_match:
@@ -104,12 +105,6 @@ def __parse_arguments(arguments: str):
         arguments,
         re.I
     )
-    format_match = re.search(
-        r'\.([a-z0-9]{2,5})',
-        arguments,
-        re.I
-    )
     return (
         size_match,
-        format_match,
     )
