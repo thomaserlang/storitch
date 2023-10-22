@@ -12,7 +12,6 @@
 <!ATTLIST policy value CDATA #IMPLIED>
 ]>
 <policymap>
-  <policy domain="resource" name="temporary-path" value="/tmp/imagemagick"/>
   <!-- Set maximum parallel threads. -->
   <policy domain="resource" name="thread" value="2"/>
   <!-- Set maximum time in seconds or neumonics, e.g. "2 minutes". When this
