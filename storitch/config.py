@@ -23,6 +23,7 @@ class ConfigModel(BaseSettings):
         '.bmp', '.bmp2', '.bmp3', '.dcm', '.dicom', '.webp',
         '.heic', '.heif', '.avif'
     ]
+    allowed_resizes: list[int] = []
     dir_mode: str = '755'
     file_mode: str = '444'
     temp_path: str = '/var/storitch/tmp'

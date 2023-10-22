@@ -70,8 +70,7 @@ async def convert(path: str):
     p = path.split('@')
     if len(p) != 2:
         raise HTTPException(status_code=400, detail='Invalid thumbnail arguments.')
-    if os.path.exists(path):
-        return True
+
     if len(p[1]) > 40:
         raise HTTPException(status_code=400, detail='Parameters too long, max 40.')
 
@@ -81,23 +80,13 @@ async def convert(path: str):
     if ext:
         if ext not in config.image_exts:
             raise HTTPException(status_code=400, detail='Invalid file extension.')
-
-    size_match, = __parse_arguments(p[1])
     
     args = []
-    size = ''
-    if size_match:
-        # resize, keep aspect ratio
-        if size_match.group(1) != None:# width
-            args.append('-resize')
-            args.append(f'{size_match.group(1)}x')
-            size = f'SX{size_match.group(1)}'
-        elif size_match.group(2) != None:# height
-            args.append('-resize')
-            args.append(f'x{size_match.group(2)}')
-            size = f'SY{size_match.group(2)}'
-
+    size = _get_size(p[1], args)
     save_path = f'{p[0]}@{size}{ext}'
+
+    if os.path.exists(save_path):
+        return save_path
 
     # "[0]" is to limit to the first image if e.g. the file is a dicom and contains multiple images
     p = await asyncio.subprocess.create_subprocess_exec(
@@ -115,12 +104,26 @@ async def convert(path: str):
     return save_path
 
 
-def __parse_arguments(arguments: str):
+def _get_size(arguments: str, convert_args: list[str]):
     size_match = re.search(
         r'SX([0-9]+)|SY([0-9]+)',
         arguments,
         re.I
     )
-    return (
-        size_match,
-    )
+    if size_match:
+        convert_args.append('-resize')
+        if size_match.group(1):
+            is_allowed_size(int(size_match.group(1)))
+            convert_args.append(f'{size_match.group(1)}x')
+            return f'SX{size_match.group(1)}'
+        elif size_match.group(2):
+            is_allowed_size(int(size_match.group(2)))
+            convert_args.append(f'x{size_match.group(2)}')
+            return f'SY{size_match.group(2)}'
+    return ''
+
+
+def is_allowed_size(size: int):
+    if config.allowed_resizes and size not in config.allowed_resizes:
+        raise HTTPException(status_code=400, detail=f'Size {size} not allowed.')
+    return True
