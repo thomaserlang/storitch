@@ -79,8 +79,7 @@
        web-safe image formats.  -->
 <policy xmlns="" domain="module" rights="none" pattern="*"/>
 <policy xmlns="" domain="module" rights="read | write" pattern="{BMP,GIF,JPEG,PNG,TIFF,WEBP,HEIC,AVIF,DCM}"/>
-<policy xmlns="" domain="module" rights="read | write" pattern="{MPC}" stealth="true"/>
-<policy xmlns="" domain="module" rights="write" pattern="{JSON,INFO,PNM,PS}"/>
+
 <!--  This policy sets the number of times to replace content of certain
        memory buffers and temporary files before they are freed or deleted.  -->
 <policy xmlns="" domain="system" name="shred" value="1"/>
