@@ -4,7 +4,7 @@ It's recommended running Storitch behind a reverse proxy like Nginx.
 
 
 ## Image manipulation
-Images can be resized and rotated using the @ arguments.
+Images can be resized using the @ arguments.
 
 Arguments can be specified as followed:
 
