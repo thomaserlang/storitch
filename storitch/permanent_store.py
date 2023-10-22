@@ -1,9 +1,8 @@
+import asyncio
 import os, uuid, logging
 import hashlib
 import aiofiles
 from aiofiles import os as aioos
-from starlette.concurrency import run_in_threadpool
-from wand import image, exceptions
 from . import utils, schemas, config
 
 
@@ -40,8 +39,8 @@ async def upload_result(file_id: str, hash_: str, filename: str):
     if len(d) == 2:
         ext = d[1]
         if ext.lower() in config.image_exts:
-            width, height = await run_in_threadpool(image_width_high, path)
-            if width or height:
+            width, height = await image_width_high(path)
+            if width and height:
                 type_ = 'image'
     
     return schemas.Upload_result(
@@ -81,10 +80,20 @@ def get_file_path(file_id):
     )
 
 
-def image_width_high(path):
-    try:
-        with image.Image(filename=f'{path}[0]') as img:
-            return (img.width, img.height)
-    except Exception as e:
-        logging.error(f'{path}: {str(e)}')
+async def image_width_high(path):
+    # "[0]" is to limit to the first image if e.g. the file is a dicom and contains multiple images
+    p = await asyncio.subprocess.create_subprocess_exec(
+        'identify',
+        '-ping',
+        '-format',
+        '%w %h',
+        f'{path}[0]',
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    data, error = await p.communicate()
+    if error:            
+        logging.error(f'{path}: {str(error.decode())}')
         return (None, None)
+    r = data.decode().split(' ')
+    return (int(r[0]), int(r[1]))
