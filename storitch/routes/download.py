@@ -101,6 +101,7 @@ async def convert(path: str):
     if error:
         logging.error(f'{path}: {str(error.decode())}')
         return
+    os.chmod(save_path, int(config.file_mode, 8))
     return save_path
 
 

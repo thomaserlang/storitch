@@ -8,7 +8,7 @@ from fastapi import APIRouter, Security, Header, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
 from starlette.concurrency import run_in_threadpool
-from ..permanent_store import create_store_folder, get_store_folder, upload_result
+from ..permanent_store import create_store_folder, upload_result
 from .. import schemas, utils
 from ..security import validate_api_key
 from .. import config
@@ -101,9 +101,8 @@ async def save(request: Request, session: str, filename: str, finished: bool, ne
         hash_ = await run_in_threadpool(utils.file_sha256, temp_path)
         file_id = str(uuid.uuid4())
         dir = await create_store_folder(file_id)
-        await aioos.rename(
-            temp_path,
-            os.path.join(dir, file_id),
-        )
+        path = os.path.join(dir, file_id)
+        await aioos.rename(temp_path, path)
+        os.chmod(path, int(config.file_mode, 8))
         return await upload_result(file_id, hash_, filename)
     return schemas.Session_result(session=session)

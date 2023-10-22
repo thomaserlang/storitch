@@ -25,7 +25,7 @@ async def move_to_permanent_store(
             await f.write(chunk)
             digest.update(chunk)
     hash_ = digest.hexdigest()
-    file_chmod(file_id)
+    os.chmod(path, int(config.file_mode, 8))
     return await upload_result(file_id, hash_, filename)
     
 
@@ -59,11 +59,6 @@ async def create_store_folder(file_id):
     if not await aioos.path.exists(dir):
         await aioos.makedirs(dir, mode=int(config.dir_mode, 8))
     return dir
-
-
-def file_chmod(file_id):
-    path = get_file_path(file_id)
-    os.chmod(path, int(config.file_mode, 8))
 
 
 def get_store_folder(file_id):
