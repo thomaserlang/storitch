@@ -4,8 +4,8 @@ from aiofiles import os as aioos
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 from mimetypes import guess_type
-
 from pydantic import constr
+from storitch import config
 from .. import permanent_store
 
 router = APIRouter()
@@ -44,8 +44,10 @@ async def download(
 ):
     path = permanent_store.get_file_path(file_id)
     if '@' in file_id:
-        if not await convert(path):
+        converted = await convert(path)
+        if not converted: 
             raise HTTPException(status_code=500, detail='Failed to convert file.')
+        path = converted
     try:
         stat = await aioos.stat(path)
         return FileResponse(
@@ -73,32 +75,44 @@ async def convert(path: str):
     if len(p[1]) > 40:
         raise HTTPException(status_code=400, detail='Parameters too long, max 40.')
 
+    # get the extension from the path
+    f = os.path.splitext(path)
+    ext = f[1].lower() if len(f) == 2 else ''
+    if ext:
+        if ext not in config.image_exts:
+            raise HTTPException(status_code=400, detail='Invalid file extension.')
+
     size_match, = __parse_arguments(p[1])
     
     args = []
+    size = ''
     if size_match:
         # resize, keep aspect ratio
         if size_match.group(1) != None:# width
             args.append('-resize')
             args.append(f'{size_match.group(1)}x')
+            size = f'SX{size_match.group(1)}'
         elif size_match.group(2) != None:# height
             args.append('-resize')
             args.append(f'x{size_match.group(2)}')
+            size = f'SY{size_match.group(2)}'
+
+    save_path = f'{p[0]}@{size}{ext}'
 
     # "[0]" is to limit to the first image if e.g. the file is a dicom and contains multiple images
     p = await asyncio.subprocess.create_subprocess_exec(
         'convert',
         f'{p[0]}[0]',
         *args,
-        path,
+        save_path,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
     _, error = await p.communicate()
-    if error:            
+    if error:
         logging.error(f'{path}: {str(error.decode())}')
-        return False
-    return True
+        return
+    return save_path
 
 
 def __parse_arguments(arguments: str):

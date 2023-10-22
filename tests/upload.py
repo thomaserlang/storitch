@@ -56,14 +56,14 @@ def thumbnail():
     assert d[0]['height'] == 5
 
     r = requests.get(
-        f'http://127.0.0.1:3000/{d[0]["file_id"]}@.jpg',
+        f'http://127.0.0.1:3000/{d[0]["file_id"]}@SX2.jpg',
     )
     assert r.status_code == 200, r.content
 
     r = requests.get(
         f'http://127.0.0.1:3000/{d[0]["file_id"]}@.ps',
     )
-    assert r.status_code == 500, r.content
+    assert r.status_code == 400, r.content
 
 
 def dcm_thumbnail():
