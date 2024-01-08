@@ -132,11 +132,11 @@ def _get_size(arguments: str, convert_args: list[str]):
     if size_match:
         convert_args.append('-resize')
         if size_match.group(1):
-            is_allowed_size(int(size_match.group(1)))
+            is_allowed_resize_size(int(size_match.group(1)))
             convert_args.append(f'{size_match.group(1)}x')
             return f'SX{size_match.group(1)}'
         elif size_match.group(2):
-            is_allowed_size(int(size_match.group(2)))
+            is_allowed_resize_size(int(size_match.group(2)))
             convert_args.append(f'x{size_match.group(2)}')
             return f'SY{size_match.group(2)}'
     return ''
@@ -212,7 +212,7 @@ async def _send_bytes(path: str, start: int, end: int):
             yield await f.read(read_size)
 
 
-def is_allowed_size(size: int):
+def is_allowed_resize_size(size: int):
     if config.allowed_resizes and size not in config.allowed_resizes:
         raise HTTPException(status_code=400, detail=f'Size {size} not allowed.')
     return True
