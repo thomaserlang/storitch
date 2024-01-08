@@ -27,6 +27,7 @@ class ConfigModel(BaseSettings):
     dir_mode: str = '755'
     file_mode: str = '444'
     temp_path: str = '/var/storitch/tmp'
+    content_disposition_type: str = 'inline'
 
     model_config = ConfigDict(
         env_prefix='storitch_',

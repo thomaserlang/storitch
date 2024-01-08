@@ -159,6 +159,7 @@ def range_requests_response(
         stat_result=stat_result, 
         filename=filename,
         media_type=media_type,
+        content_disposition_type=config.content_disposition_type,
     )
     headers = f.headers
     headers['accept-ranges'] = 'bytes'
