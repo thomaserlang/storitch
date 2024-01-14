@@ -1,6 +1,10 @@
 # Build:
 # docker build -t thomaserlang/storitch .
 # docker push thomaserlang/storitch:latest
+FROM python:3.12-slim-bookworm as pybuilder
+COPY . .
+RUN pip wheel -r requirements.txt --wheel-dir=/wheels
+
 
 FROM python:3.12-slim-bookworm
 
@@ -13,8 +17,13 @@ RUN rm deb-multimedia-keyring_2016.8.1_all.deb
 RUN echo "deb https://www.deb-multimedia.org bookworm main non-free" >> /etc/apt/sources.list
 RUN apt-get update; apt-get install imagemagick-7 -y; apt-get clean
 
+RUN mkdir /app
+WORKDIR /app
 COPY . .
+COPY --from=pybuilder /wheels /wheels
 RUN mv conf/policy.xml /etc/ImageMagick-7/policy.xml
+RUN pip install --no-index --find-links=/wheels -r requirements.txt
+RUN rm -rf /wheels
 
 ENV \
     PIP_NO_CACHE_DIR=1 \
