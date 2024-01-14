@@ -84,8 +84,28 @@ def dcm_thumbnail():
     )
     assert r.status_code == 200, r.content
 
+def exif_data():
+    r = requests.post(
+        f'http://127.0.0.1:3000/store',
+        files={'file': open('./tests/Canon_40D.jpg', 'rb')},
+        headers={'Authorization': 'test'},
+    )
+    assert r.status_code == 201, r.content
+    d = r.json()
+    assert d[0]['metadata']['exif']['DateTime'] == '2008:07:31 10:38:11', d[0]['metadata']['exif']
+
+    r = requests.post(
+        f'http://127.0.0.1:3000/store',
+        files={'file': open('./tests/0002.DCM', 'rb')},
+        headers={'Authorization': 'test'},
+    )
+    assert r.status_code == 201, r.content
+    d = r.json()
+    assert d[0]['metadata']['dicom']['00080020']['Value'][0] == '19941013', d[0]['metadata']['dicom']['00080020']
+
 if __name__ == '__main__':
     upload_multipart() 
     upload_session()
     thumbnail()
+    exif_data()
     dcm_thumbnail()

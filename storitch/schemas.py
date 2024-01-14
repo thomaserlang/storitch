@@ -1,5 +1,14 @@
-from typing import Literal
-from pydantic import BaseModel, constr
+from typing import Literal, Optional
+from pydantic import BaseModel, ConfigDict, constr
+
+class Dicom_element(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    vr: str
+    Value: Optional[list[any]] = None
+
+class Metadata(BaseModel):
+    exif: dict | None = None
+    dicom: dict[str, Dicom_element] | None = None
 
 
 class Upload_result(BaseModel):
@@ -8,9 +17,9 @@ class Upload_result(BaseModel):
     hash: str | None
     file_id: str
     type: Literal['file', 'image']
-    width: int | None
-    height: int | None
-
+    width: int | None = None    
+    height: int | None = None
+    metadata: Metadata | None = None
 
 class Session_upload_start(BaseModel):
     filename: str

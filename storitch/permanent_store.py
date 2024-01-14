@@ -3,13 +3,15 @@ import os, uuid, logging
 import hashlib
 import aiofiles
 from aiofiles import os as aioos
+from fastapi.concurrency import run_in_threadpool
+from pydantic import TypeAdapter
 from . import utils, schemas, config
 
 
 async def move_to_permanent_store(
-        file_: aiofiles.tempfile.SpooledTemporaryFile, 
-        filename: str,
-    ):
+    file_: aiofiles.tempfile.SpooledTemporaryFile, 
+    filename: str,
+):
     file_id = str(uuid.uuid4())
     dir = await create_store_folder(file_id)
     path = os.path.join(dir, file_id)
@@ -30,52 +32,75 @@ async def move_to_permanent_store(
     
 
 async def upload_result(file_id: str, hash_: str, filename: str):
-    type_ = 'file'
-    width = None
-    height = None
+    data = {}
     path = get_file_path(file_id)
-    # If it's an image, extract its width and hight
-    d = os.path.splitext(filename)
-    if len(d) == 2:
-        ext = d[1]
-        if ext.lower() in config.image_exts:
-            width, height = await image_width_high(path)
-            if width and height:
-                type_ = 'image'
-    
+    ext = get_file_ext(filename)
+    if is_image(ext):
+        data = await get_image_data(path, ext)
+    if not data:
+        data = {'type': 'file'}
     return schemas.Upload_result(
         file_id=file_id,
         file_size=(await aioos.stat(path)).st_size,
         filename=filename,
         hash=hash_,
-        type=type_,
-        width=width,
-        height=height,
+        **data
     )
 
 
-async def create_store_folder(file_id):
+async def create_store_folder(file_id: str):
     dir = get_store_folder(file_id)
     if not await aioos.path.exists(dir):
         await aioos.makedirs(dir, mode=int(config.dir_mode, 8))
     return dir
 
 
-def get_store_folder(file_id):
+def get_store_folder(file_id: str):
     return os.path.join(
         config.store_path,
         utils.path_from_file_id(file_id),
     )
 
 
-def get_file_path(file_id):
+def get_file_path(file_id: str):
     return os.path.join(
         get_store_folder(file_id),
         file_id,
     )
 
 
-async def image_width_high(path):
+def is_image(ext: str):
+    return ext in config.image_exts
+
+def get_file_ext(filename: str):
+    d = os.path.splitext(filename)
+    if len(d) != 2:
+        return ''
+    return d[1].lower()
+
+async def get_image_data(path: str, ext: str):
+    width, height = await image_width_high(path)
+    if not width or not height:
+        return {}
+    data = {
+        'type': 'image',
+        'width': width,
+        'height': height,
+    }
+    if not config.extract_metadata:
+        return data
+    
+    if ext in ('.dcm', '.dicom'):
+        elements = await run_in_threadpool(get_dicom_elements, path)
+        if elements:
+            data['metadata'] = schemas.Metadata(dicom=elements)
+    else:
+        exif = await run_in_threadpool(get_image_exif, path)
+        if exif:
+            data['metadata'] = schemas.Metadata(exif=exif)
+    return data
+
+async def image_width_high(path: str):
     # "[0]" is to limit to the first image if e.g. the file is a dicom and contains multiple images
     p = await asyncio.subprocess.create_subprocess_exec(
         'identify',
@@ -87,8 +112,40 @@ async def image_width_high(path):
         stderr=asyncio.subprocess.PIPE,
     )
     data, error = await p.communicate()
-    if error:            
+    if error:
         logging.error(f'{path}: {str(error.decode())}')
         return (None, None)
     r = data.decode().split(' ')
     return (int(r[0]), int(r[1]))
+
+def get_image_exif(path: str):
+    from PIL import Image, ExifTags
+    try:
+        with Image.open(path) as img:
+            exif = img.getexif()
+            if not exif:
+                return {}
+            d = {}
+            for tag, value in exif.items():
+                tag_name = ExifTags.TAGS.get(tag)
+                try:
+                    if tag_name:
+                        d[tag_name] = str(value) \
+                            if not isinstance(value, str) and \
+                            not isinstance(value, int) and \
+                            not isinstance(value, tuple) \
+                        else value
+                except:
+                    pass
+            return d
+    except:
+        return None
+    
+def get_dicom_elements(path: str):
+    import pydicom
+    try:
+        with pydicom.read_file(path, stop_before_pixels=True) as dataset:
+            ta = TypeAdapter(dict[str, schemas.Dicom_element])
+            return ta.validate_python(dataset.to_json_dict())
+    except:
+        return None
