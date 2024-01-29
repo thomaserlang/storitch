@@ -133,7 +133,7 @@ def _get_size(arguments: str, convert_args: list[str]):
         re.I
     )
     if size_match:
-        convert_args.append('-resize')
+        convert_args.append('-thumbnail')
         if size_match.group(1):
             is_allowed_resize_size(int(size_match.group(1)))
             convert_args.append(f'{size_match.group(1)}x')
