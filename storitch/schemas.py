@@ -3,8 +3,9 @@ from pydantic import BaseModel, ConfigDict, constr
 
 class Dicom_element(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
+
     vr: str
-    Value: Optional[list[any]] = None
+    Value: Optional[list] = None
 
 class Metadata(BaseModel):
     exif: dict | None = None

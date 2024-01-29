@@ -52,6 +52,7 @@ async def download(
         if not converted: 
             raise HTTPException(status_code=500, detail='Failed to convert file.')
         path = converted
+
     try:
         stat_result = await aioos.stat(path)
         media_type = guess_type(filename or file_id)[0] or "application/octet-stream"
@@ -99,7 +100,9 @@ async def convert(path: str):
         if ext not in config.image_exts:
             raise HTTPException(status_code=400, detail='Invalid file extension.')
     
-    args = []
+    args = [
+        '-auto-orient',
+    ]
     size = _get_size(p[1], args)
     save_path = f'{p[0]}@{size}{ext}'
 

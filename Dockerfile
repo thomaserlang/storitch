@@ -22,6 +22,7 @@ WORKDIR /app
 COPY . .
 COPY --from=pybuilder /wheels /wheels
 RUN mv conf/policy.xml /etc/ImageMagick-7/policy.xml
+RUN mv conf/mime.types /etc/mime.types
 RUN pip install --no-index --find-links=/wheels -r requirements.txt
 RUN rm -rf /wheels
 
