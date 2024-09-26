@@ -107,3 +107,11 @@ Or
     "session": "b12ece41-919b-46ef-96b8-703af0f1b5ac"
 }
 ```
+
+
+
+## Development install
+
+    python3 -m venv .venv
+    source .venv/bin/activate
+    python -m pip install -e .
