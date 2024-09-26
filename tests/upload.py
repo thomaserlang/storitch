@@ -98,7 +98,7 @@ def dcm_thumbnail():
     assert r.status_code == 200, r.content
 
 
-def exif_data():
+def metadata():
     r = requests.post(
         'http://127.0.0.1:3000/store',
         files={'file': open('./tests/Canon_40D.jpg', 'rb')},
@@ -109,6 +109,8 @@ def exif_data():
     assert d[0]['metadata']['exif']['DateTime'] == '2008:07:31 10:38:11', d[0][
         'metadata'
     ]['exif']
+    assert d[0]['type'] == 'image'
+    assert d[0]['extension'] == 'jpg'
 
     r = requests.post(
         'http://127.0.0.1:3000/store',
@@ -120,12 +122,28 @@ def exif_data():
     assert d[0]['metadata']['dicom']['00080020']['Value'][0] == '19941013', d[0][
         'metadata'
     ]['dicom']['00080020']
+    assert d[0]['type'] == 'image'
+    assert d[0]['extension'] == 'dcm'
+
+    r = requests.post(
+        'http://127.0.0.1:3000/store',
+        files={'file': open('./tests/0003', 'rb')},
+        headers={'Authorization': 'test'},
+    )
+    assert r.status_code == 201, r.content
+    d = r.json()
+    assert d[0]['metadata']['dicom']['00080020']['Value'][0] == '19941013', d[0][
+        'metadata'
+    ]['dicom']['00080020']
+    assert d[0]['type'] == 'image'
+    assert d[0]['extension'] == 'dcm'
+
 
 
 if __name__ == '__main__':
     upload_multipart()
     upload_session()
     thumbnail()
-    exif_data()
+    metadata()
     dcm_thumbnail()
     print('OK')

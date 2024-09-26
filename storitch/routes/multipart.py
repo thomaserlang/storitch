@@ -4,13 +4,13 @@ from typing import Annotated
 from fastapi import APIRouter, Security, UploadFile
 
 from .. import schemas
-from ..permanent_store import move_to_permanent_store
 from ..security import validate_api_key
+from ..store_file import move_to_permanent_store
 
 router = APIRouter()
 
 
-@router.post('/store', response_model=list[schemas.Upload_result], status_code=201)
+@router.post('/store', response_model=list[schemas.UploadResult], status_code=201)
 async def store(
     file: list[UploadFile],
     api_key: Annotated[str, Security(validate_api_key)],

@@ -11,15 +11,15 @@ from pydantic import ValidationError
 from starlette.concurrency import run_in_threadpool
 
 from .. import config, schemas, utils
-from ..permanent_store import create_store_folder, upload_result
 from ..security import validate_api_key
+from ..store_file import create_store_folder, upload_result
 
 router = APIRouter()
 
 
 @router.post(
     '/store/session',
-    response_model=schemas.Upload_result | schemas.Session_result,
+    response_model=schemas.UploadResult | schemas.SessionResult,
     status_code=201,
     description="""
 For chunked uploads, `X-Finished` should be false for all but the last chunk.
@@ -33,20 +33,21 @@ async def session_upload_start(
     api_key: Annotated[str, Security(validate_api_key)],
     x_storitch: Annotated[
         str, Header(description='JSON encoded string', deprecated=True)
-    ] | None  = None,
+    ]
+    | None = None,
     x_filename: Annotated[str, Header(description='Filename')] = '',
     x_finished: Annotated[bool, Header(description='Finished uploading')] = True,
 ):
     if x_storitch:
         try:
-            info = schemas.Session_upload_start.model_validate(json.loads(x_storitch))
+            info = schemas.SessionUploadStart.model_validate(json.loads(x_storitch))
         except json.decoder.JSONDecodeError:
             raise HTTPException(
                 status_code=400, detail='Invalid JSON in X-Storitch header'
             )
     else:
         try:
-            info = schemas.Session_upload_start(
+            info = schemas.SessionUploadStart(
                 filename=x_filename,
                 finished=x_finished,
             )
@@ -59,7 +60,7 @@ async def session_upload_start(
 
 @router.patch(
     '/store/session',
-    response_model=schemas.Upload_result | schemas.Session_result,
+    response_model=schemas.UploadResult | schemas.SessionResult,
     status_code=200,
     description="""
 `X-Finished` should be false for all but the last chunk.
@@ -78,14 +79,14 @@ async def session_upload_append(
 ):
     if x_storitch:
         try:
-            info = schemas.Session_upload_append.model_validate(json.loads(x_storitch))
+            info = schemas.SessionUploadAppend.model_validate(json.loads(x_storitch))
         except json.decoder.JSONDecodeError:
             raise HTTPException(
                 status_code=400, detail='Invalid JSON in X-Storitch header'
             )
     else:
         try:
-            info = schemas.Session_upload_append(
+            info = schemas.SessionUploadAppend(
                 session=x_session,
                 filename=x_filename,
                 finished=x_finished,
@@ -116,4 +117,4 @@ async def save(
         await aioos.rename(temp_path, path)
         os.chmod(path, int(config.file_mode, 8))
         return await upload_result(file_id, hash_, filename)
-    return schemas.Session_result(session=session)
+    return schemas.SessionResult(session=session)

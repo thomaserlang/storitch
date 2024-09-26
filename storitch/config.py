@@ -30,24 +30,24 @@ class ConfigModel(BaseSettings):
     store_path: str = '/var/storitch'
     api_keys: list[str] = []
     logging: ConfigLoggingModel = ConfigLoggingModel()
-    image_exts: list[str] = [
-        '.jpg',
-        '.jpeg',
-        '.png',
-        '.tiff',
-        '.tif',
-        '.gif',
-        '.bmp',
-        '.bmp2',
-        '.bmp3',
-        '.dcm',
-        '.dicom',
-        '.webp',
-        '.heic',
-        '.heif',
-        '.avif',
-        '.jfif',
-        '.raw',
+    image_extensions: list[str] = [
+        'jpg',
+        'jpeg',
+        'png',
+        'tiff',
+        'tif',
+        'gif',
+        'bmp',
+        'bmp2',
+        'bmp3',
+        'dcm',
+        'dicom',
+        'webp',
+        'heic',
+        'heif',
+        'avif',
+        'jfif',
+        'raw',
     ]
     allowed_resizes: list[int] = []
     dir_mode: str = '755'
@@ -60,14 +60,8 @@ class ConfigModel(BaseSettings):
 config: ConfigModel
 
 default_paths = [
-    '~/storitch.yaml',
-    './storitch.yaml',
-    '../storitch.yaml',
     '/etc/storitch/storitch.yaml',
     '/etc/storitch.yaml',
-    '~/storitch.yml',
-    './storitch.yml',
-    '../storitch.yml',
     '/etc/storitch/storitch.yml',
     '/etc/storitch.yml',
 ]

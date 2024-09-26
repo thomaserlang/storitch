@@ -13,7 +13,7 @@ from pydantic import StringConstraints
 
 from storitch import config
 
-from .. import permanent_store
+from .. import store_file
 
 router = APIRouter()
 
@@ -58,7 +58,7 @@ async def download(
     request: Request,
     filename: str | None = None,
 ):
-    path = permanent_store.get_file_path(file_id)
+    path = store_file.get_file_path(file_id)
     if '@' in file_id:
         converted = await convert(path)
         if not converted:
@@ -107,9 +107,9 @@ async def convert(path: str):
 
     # get the extension from the path
     f = os.path.splitext(path)
-    ext = f[1].lower() if len(f) == 2 else ''
+    ext = f[1].lower()[1:] if len(f) == 2 else ''
     if ext:
-        if ext not in config.image_exts:
+        if ext not in config.image_extensions:
             raise HTTPException(status_code=400, detail='Invalid file extension.')
 
     args = [
