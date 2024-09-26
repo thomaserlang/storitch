@@ -1,1 +1,1 @@
-from storitch.config import config
+from storitch.config import config as config

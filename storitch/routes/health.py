@@ -1,11 +1,14 @@
+import aiofiles
+import aiofiles.os
 from fastapi import APIRouter, Response
 from fastapi.responses import PlainTextResponse
-import aiofiles
+
 from .. import config
 
 router = APIRouter()
 
-@router.get("/health", response_class=PlainTextResponse)
+
+@router.get('/health', response_class=PlainTextResponse)
 async def health(response: Response):
     path_exists = await aiofiles.os.path.exists(config.store_path)
     if not path_exists:

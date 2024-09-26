@@ -1,5 +1,7 @@
-from typing import Literal, Optional
-from pydantic import BaseModel, ConfigDict, constr
+from typing import Annotated, Literal, Optional
+
+from pydantic import BaseModel, ConfigDict, StringConstraints
+
 
 class Dicom_element(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
@@ -27,7 +29,7 @@ class Session_upload_start(BaseModel):
     finished: bool
 
 class Session_upload_append(BaseModel):
-    session: constr(min_length=36, max_length=36, pattern='^[0-9a-fA-F-]+$')
+    session: Annotated[str, StringConstraints(min_length=36, max_length=36, pattern='^[0-9a-fA-F-]+$')]
     filename: str
     finished: bool
 

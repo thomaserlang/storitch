@@ -1,17 +1,23 @@
 import asyncio
-import re, os, logging
-from aiofiles import os as aioos
+import logging
+import os
+import re
+from mimetypes import guess_type
+from typing import Annotated
+
 import anyio
+from aiofiles import os as aioos
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import FileResponse, StreamingResponse
-from mimetypes import guess_type
-from pydantic import constr
+from pydantic import StringConstraints
+
 from storitch import config
+
 from .. import permanent_store
 
 router = APIRouter()
 
-description = '''
+description = """
 Download a file from the permanent store.
 
 To resize an image, add the arguments to the path.
@@ -36,37 +42,43 @@ Example:
 
 Resizes the image to a width of 1024, rotates it 90 degrees and converts 
 it to a PNG file.
-'''
+"""
+
+
 @router.get('/{file_id}', response_class=FileResponse, description=description)
-@router.get('/{file_id}/{filename}', response_class=FileResponse, description=description)
+@router.get(
+    '/{file_id}/{filename}', response_class=FileResponse, description=description
+)
 @router.head('/{file_id}', description=description)
 @router.head('/{file_id}/{filename}', description=description)
 async def download(
-    file_id: constr(pattern=r'[a-zA-Z0-9-]+(@[a-zA-Z0-9_-.]+)?'),
+    file_id: Annotated[
+        str, StringConstraints(pattern=r'[a-zA-Z0-9-]+(@[a-zA-Z0-9_\-.]+)?')
+    ],
     request: Request,
-    filename: str = None,
+    filename: str | None = None,
 ):
     path = permanent_store.get_file_path(file_id)
     if '@' in file_id:
         converted = await convert(path)
-        if not converted: 
+        if not converted:
             raise HTTPException(status_code=500, detail='Failed to convert file.')
         path = converted
 
     try:
         stat_result = await aioos.stat(path)
-        media_type = guess_type(filename or file_id)[0] or "application/octet-stream"
+        media_type = guess_type(filename or file_id)[0] or 'application/octet-stream'
 
         if request.method == 'HEAD':
             return FileResponse(
                 path,
-                status_code=200, 
-                media_type=media_type, 
+                status_code=200,
+                media_type=media_type,
                 filename=filename,
                 method='HEAD',
                 stat_result=stat_result,
             )
-        
+
         return range_requests_response(
             request=request,
             path=path,
@@ -79,13 +91,13 @@ async def download(
 
 
 async def convert(path: str):
-    '''
+    """
     Specify the path and add a "@" followed by the arguments.
 
     This allows us to easily get the original file, make the changes,
     save the file with the full path, so the server never has to do
     the operation again, as long as the arguments are precisely the same.
-    '''
+    """
     p = path.split('@')
     if len(p) != 2:
         raise HTTPException(status_code=400, detail='Invalid thumbnail arguments.')
@@ -99,7 +111,7 @@ async def convert(path: str):
     if ext:
         if ext not in config.image_exts:
             raise HTTPException(status_code=400, detail='Invalid file extension.')
-    
+
     args = [
         '-auto-orient',
     ]
@@ -127,11 +139,7 @@ async def convert(path: str):
 
 
 def _get_size(arguments: str, convert_args: list[str]):
-    size_match = re.search(
-        r'SX([0-9]+)|SY([0-9]+)',
-        arguments,
-        re.I
-    )
+    size_match = re.search(r'SX([0-9]+)|SY([0-9]+)', arguments, re.I)
     if size_match:
         convert_args.append('-thumbnail')
         if size_match.group(1):
@@ -146,20 +154,20 @@ def _get_size(arguments: str, convert_args: list[str]):
 
 
 def range_requests_response(
-    request: Request, 
-    path: str, 
+    request: Request,
+    path: str,
     filename: str,
     media_type: str,
-    stat_result: os.stat_result,    
+    stat_result: os.stat_result,
 ):
     """Returns StreamingResponse using Range Requests of a given file"""
 
     file_size = stat_result.st_size
-    range_header = request.headers.get("range")
+    range_header = request.headers.get('range')
 
     f = FileResponse(
-        path=path, 
-        stat_result=stat_result, 
+        path=path,
+        stat_result=stat_result,
         filename=filename,
         media_type=media_type,
         content_disposition_type=config.content_disposition_type,
@@ -178,8 +186,8 @@ def range_requests_response(
     if range_header is not None:
         start, end = _get_range_header(range_header, file_size)
         size = end - start + 1
-        headers["content-length"] = str(size)
-        headers["content-range"] = f"bytes {start}-{end}/{file_size}"
+        headers['content-length'] = str(size)
+        headers['content-range'] = f'bytes {start}-{end}/{file_size}'
         status_code = status.HTTP_206_PARTIAL_CONTENT
 
     return StreamingResponse(
@@ -193,13 +201,13 @@ def _get_range_header(range_header: str, file_size: int) -> tuple[int, int]:
     def _invalid_range():
         return HTTPException(
             status.HTTP_416_REQUESTED_RANGE_NOT_SATISFIABLE,
-            detail=f"Invalid request range (Range:{range_header!r})",
+            detail=f'Invalid request range (Range:{range_header!r})',
         )
 
     try:
-        h = range_header.replace("bytes=", "").split("-")
-        start = int(h[0]) if h[0] != "" else 0
-        end = int(h[1]) if h[1] != "" else file_size - 1
+        h = range_header.replace('bytes=', '').split('-')
+        start = int(h[0]) if h[0] != '' else 0
+        end = int(h[1]) if h[1] != '' else file_size - 1
     except ValueError:
         raise _invalid_range()
 
@@ -209,7 +217,7 @@ def _get_range_header(range_header: str, file_size: int) -> tuple[int, int]:
 
 
 async def _send_bytes(path: str, start: int, end: int):
-    async with await anyio.open_file(path, mode="rb") as f:
+    async with await anyio.open_file(path, mode='rb') as f:
         await f.seek(start)
         while (pos := await f.tell()) <= end:
             read_size = min(FileResponse.chunk_size, end + 1 - pos)

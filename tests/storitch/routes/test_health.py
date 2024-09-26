@@ -1,8 +1,10 @@
 from fastapi.testclient import TestClient
+
 from storitch import config
 from storitch.main import app
 
 client = TestClient(app)
+
 
 def test_health():
     prev_store_path = config.store_path
