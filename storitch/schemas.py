@@ -1,4 +1,4 @@
-from typing import Annotated, Literal, Optional
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, StringConstraints
 
@@ -7,7 +7,7 @@ class DicomElement(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     vr: str
-    Value: Optional[list] = None
+    Value: list | None = None
 
 
 class Metadata(BaseModel):
