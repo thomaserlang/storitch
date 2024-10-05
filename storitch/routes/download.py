@@ -183,7 +183,7 @@ def range_requests_response(
     end = file_size - 1
     status_code = status.HTTP_200_OK
 
-    if range_header is not None:
+    if range_header is not None and range_header != '':
         start, end = _get_range_header(range_header, file_size)
         size = end - start + 1
         headers['content-length'] = str(size)
