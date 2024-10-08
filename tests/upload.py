@@ -1,4 +1,7 @@
+import io
+
 import requests
+from PIL import Image
 
 
 def upload_multipart():
@@ -33,7 +36,7 @@ def upload_session():
                     'Authorization': 'test',
                 },
             )
-            r = requests.post(**args) if start else requests.patch(**args) # type: ignore
+            r = requests.post(**args) if start else requests.patch(**args)  # type: ignore
             start = False
             assert r.status_code < 400, r.content
             j = r.json()
@@ -69,6 +72,15 @@ def thumbnail():
         f'http://127.0.0.1:3000/{d[0]["file_id"]}@SX2.jpg',
     )
     assert r.status_code == 200, r.content
+    with Image.open(io.BytesIO(r.content)) as image:
+        assert image.format == 'JPEG', image.format
+
+    r = requests.get(
+        f'http://127.0.0.1:3000/{d[0]["file_id"]}@SX2.webp',
+    )
+    assert r.status_code == 200, r.content
+    with Image.open(io.BytesIO(r.content)) as image:
+        assert image.format == 'WEBP', image.format
 
     r = requests.get(
         f'http://127.0.0.1:3000/{d[0]["file_id"]}@.ps',
@@ -96,6 +108,8 @@ def dcm_thumbnail():
         f'http://127.0.0.1:3000/{d[0]["file_id"]}@.jpg',
     )
     assert r.status_code == 200, r.content
+    with Image.open(io.BytesIO(r.content)) as image:
+        assert image.format == 'JPEG'
 
 
 def metadata():
@@ -137,7 +151,6 @@ def metadata():
     ]['dicom']['00080020']
     assert d[0]['type'] == 'image'
     assert d[0]['extension'] == 'dcm'
-
 
 
 if __name__ == '__main__':

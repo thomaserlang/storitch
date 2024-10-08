@@ -116,7 +116,9 @@ async def convert(path: str):
         '-auto-orient',
     ]
     size = _get_size(p[1], args)
-    save_path = f'{p[0]}@{size}{ext}'
+    save_path = f'{p[0]}@{size}{"." if ext else ""}{ext}'
+
+    logging.error(f'Convert: {save_path}')
 
     if os.path.exists(save_path):
         return save_path
@@ -134,6 +136,7 @@ async def convert(path: str):
     if error:
         logging.error(f'{path}: {str(error.decode())}')
         return
+    
     os.chmod(save_path, int(config.file_mode, 8))
     return save_path
 
