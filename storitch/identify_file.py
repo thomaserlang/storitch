@@ -53,7 +53,7 @@ def get_file_ext(filename: str):
     d = os.path.splitext(filename)
     if len(d) != 2:
         return ''
-    return d[1].lower()[:]
+    return d[1].lower()[1:]
 
 
 async def set_image_info(file_info: schemas.FileInfo, path: str):
