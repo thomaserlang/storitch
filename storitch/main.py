@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from .routes import (
     dicom_frames,
     download,
+    file_info,
     health,
     multipart,
     session,
@@ -23,6 +24,7 @@ app.include_router(session.router)
 app.include_router(health.router)
 app.include_router(download.router)
 app.include_router(dicom_frames.router)
+app.include_router(file_info.router)
 
 
 app.add_middleware(
