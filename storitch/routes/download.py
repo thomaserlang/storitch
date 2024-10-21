@@ -15,7 +15,7 @@ from storitch import config
 
 from .. import store_file
 
-router = APIRouter()
+router = APIRouter(tags=['Download'])
 
 description = """
 Download a file from the permanent store.
@@ -47,7 +47,10 @@ it to a PNG file.
 
 @router.get('/{file_id}', response_class=FileResponse, description=description)
 @router.get(
-    '/{file_id}/{filename}', response_class=FileResponse, description=description
+    '/{file_id}/{filename}',
+    response_class=FileResponse,
+    description=description,
+    name='Download with filename',
 )
 @router.head('/{file_id}', description=description)
 @router.head('/{file_id}/{filename}', description=description)
@@ -136,7 +139,7 @@ async def convert(path: str):
     if error:
         logging.error(f'{path}: {str(error.decode())}')
         return
-    
+
     os.chmod(save_path, int(config.file_mode, 8))
     return save_path
 

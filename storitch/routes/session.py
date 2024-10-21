@@ -14,7 +14,7 @@ from .. import config, schemas, utils
 from ..security import validate_api_key
 from ..store_file import create_store_folder, upload_result
 
-router = APIRouter()
+router = APIRouter(tags=['Session Upload'])
 
 
 @router.post(

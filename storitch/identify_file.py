@@ -129,6 +129,6 @@ def get_dicom_elements(path: str):
     try:
         with pydicom.dcmread(path, stop_before_pixels=True) as dataset:
             ta = TypeAdapter(dict[str, schemas.DicomElement])
-            return ta.validate_python(dataset.to_json_dict())
+            return ta.validate_python(dataset.to_json_dict(suppress_invalid_tags=True))
     except Exception:
         return None
