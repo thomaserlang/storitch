@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .routes import (
+    dicom_frames,
     download,
     health,
     multipart,
@@ -21,6 +22,7 @@ app.include_router(multipart.router)
 app.include_router(session.router)
 app.include_router(health.router)
 app.include_router(download.router)
+app.include_router(dicom_frames.router)
 
 
 app.add_middleware(
