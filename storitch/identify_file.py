@@ -9,6 +9,8 @@ from pydantic import TypeAdapter
 
 from storitch import config, schemas
 
+from . import filetype_matchers as filetype_matchers
+
 
 async def get_file_info(file_path: str, filename: str):
     def identify(file_path: str, filename: str):
@@ -20,19 +22,19 @@ async def get_file_info(file_path: str, filename: str):
             )
 
         type_ = 'file'
-        if kind.__class__ in IMAGE:
+        if kind in IMAGE:
             type_ = 'image'
-        elif kind.__class__ in ARCHIVE:
+        elif kind in ARCHIVE:
             type_ = 'archive'
-        elif kind.__class__ in DOCUMENT:
+        elif kind in DOCUMENT:
             type_ = 'document'
-        elif kind.__class__ in VIDEO:
+        elif kind in VIDEO:
             type_ = 'video'
-        elif kind.__class__ in AUDIO:
+        elif kind in AUDIO:
             type_ = 'audio'
-        elif kind.__class__ in APPLICATION:
+        elif kind in APPLICATION:
             type_ = 'application'
-        elif kind.__class__ in FONT:
+        elif kind in FONT:
             type_ = 'font'
 
         file_info = schemas.FileInfo(
