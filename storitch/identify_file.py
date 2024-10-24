@@ -4,7 +4,7 @@ import os.path
 
 import filetype
 from fastapi.concurrency import run_in_threadpool
-from filetype.types import APPLICATION, ARCHIVE, AUDIO, DOCUMENT, FONT, IMAGE, VIDEO
+from filetype.types import APPLICATION, ARCHIVE, AUDIO, DOCUMENT, FONT, VIDEO
 from pydantic import TypeAdapter
 
 from storitch import config, schemas
@@ -22,9 +22,7 @@ async def get_file_info(file_path: str, filename: str):
             )
 
         type_ = 'file'
-        if kind in IMAGE:
-            type_ = 'image'
-        elif kind in ARCHIVE:
+        if kind in ARCHIVE:
             type_ = 'archive'
         elif kind in DOCUMENT:
             type_ = 'document'
