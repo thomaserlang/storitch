@@ -1,8 +1,9 @@
+import asyncio
+from asyncio import TimerHandle
 from typing import Annotated
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, Path, Response
-from fastapi.concurrency import run_in_threadpool
 from highdicom.io import ImageFileReader
 
 from storitch import store_file
@@ -26,9 +27,7 @@ async def get_dicom_frames(
 ):
     frame_numbers = [int(f) for f in frames.split(',')]
     try:
-        data = await run_in_threadpool(
-            get_frames, store_file.get_file_path(file_id), frame_numbers
-        )
+        data = get_frames(store_file.get_file_path(file_id), frame_numbers)
         return Response(content=data, media_type='multipart/related')
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail='Not found')
@@ -41,13 +40,42 @@ async def get_dicom_frames(
 
 
 def get_frames(path: str, frames: list[int]):
+    if path not in _cached:
+        _cached[path] = ImageFileReader(path)
+        _cached[path].open()
+    else:
+        _cached_close_callback[path].cancel()
+    image = _cached[path]
+
+    if _cached[path].number_of_frames > 1:
+        _cached_close_callback[path] = loop.call_later(1, _close_image, path)
+
     uuid = str(uuid4())
     result = b''
-    with ImageFileReader(path) as image:
+    
+    try:
         for frame in frames:
             boundary = f'{uuid}.{frame}'
             result += f'--{boundary}\r\n'.encode()
             result += b'Content-Type: application/octet-stream\r\n\r\n'
             result += image.read_frame_raw(frame - 1)
             result += f'\r\n--{boundary}--\r\n'.encode()
+    finally:
+        if _cached[path].number_of_frames == 1:
+            _close_image(path)
+
     return result
+
+
+_cached: dict[str, ImageFileReader] = {}
+_cached_close_callback: dict[str, TimerHandle] = {}
+loop = asyncio.get_event_loop()
+
+
+def _close_image(path: str):
+    if path in _cached:
+        _cached[path].close()
+        del _cached[path]
+    if path in _cached_close_callback:
+        _cached_close_callback[path].cancel()
+        del _cached_close_callback[path]
