@@ -1,5 +1,4 @@
 import asyncio
-import logging
 import os.path
 
 import filetype
@@ -89,8 +88,7 @@ async def image_width_high(path: str):
         stderr=asyncio.subprocess.PIPE,
     )
     data, error = await p.communicate()
-    if error:
-        logging.error(f'{path}: {str(error.decode())}')
+    if error or not data:
         return (None, None)
     r = data.decode().split(' ')
     return (int(r[0]), int(r[1]))
