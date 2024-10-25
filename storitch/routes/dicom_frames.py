@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, Path, Response
 from highdicom.io import ImageFileReader
+from pydicom.errors import InvalidDicomError
 
 from storitch import store_file
 
@@ -37,6 +38,10 @@ async def get_dicom_frames(
         raise HTTPException(
             status_code=400, detail='Invalid DICOM file, does not look like an image'
         )
+    except InvalidDicomError:
+        raise HTTPException(
+            status_code=400, detail='Invalid DICOM file, could not read file'
+        )
 
 
 def get_frames(path: str, frames: list[int]):
@@ -52,7 +57,7 @@ def get_frames(path: str, frames: list[int]):
 
     uuid = str(uuid4())
     result = b''
-    
+
     try:
         for frame in frames:
             boundary = f'{uuid}.{frame}'
