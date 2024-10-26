@@ -28,8 +28,14 @@ async def get_dicom_frames(
 ):
     frame_numbers = [int(f) for f in frames.split(',')]
     try:
-        data = get_frames(store_file.get_file_path(file_id), frame_numbers)
-        return Response(content=data, media_type='multipart/related')
+        boundary = str(uuid4())
+        data = get_frames(store_file.get_file_path(file_id), frame_numbers, boundary)
+        return Response(
+            content=data,
+            headers={
+                'Content-Type': f'multipart/related; boundary={boundary}',
+            },
+        )
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail='Not found')
     except OSError:
@@ -44,7 +50,7 @@ async def get_dicom_frames(
         )
 
 
-def get_frames(path: str, frames: list[int]):
+def get_frames(path: str, frames: list[int], boundary: str):
     if path not in _cached:
         _cached[path] = ImageFileReader(path)
         _cached[path].open()
@@ -55,12 +61,10 @@ def get_frames(path: str, frames: list[int]):
     if _cached[path].number_of_frames > 1:
         _cached_close_callback[path] = loop.call_later(1, _close_image, path)
 
-    uuid = str(uuid4())
     result = b''
 
     try:
         for frame in frames:
-            boundary = f'{uuid}.{frame}'
             result += f'--{boundary}\r\n'.encode()
             result += b'Content-Type: application/octet-stream\r\n\r\n'
             result += image.read_frame_raw(frame - 1)
