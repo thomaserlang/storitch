@@ -1,18 +1,11 @@
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, StringConstraints
-
-
-class DicomElement(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    vr: str
-    Value: list | None = None
+from pydantic import BaseModel, StringConstraints
 
 
 class Metadata(BaseModel):
     exif: dict | None = None
-    dicom: dict[str, DicomElement] | None = None
+    dicom: dict[str, dict] | None = None
 
 
 FileTypes = Literal[
