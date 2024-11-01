@@ -57,11 +57,12 @@ def get_frames(path: str, frames: list[int], boundary: str):
         _cached[path] = ImageFileReader(path)
         _cached[path].open()
     else:
-        _cached_close_callback[path].cancel()
+        if path in _cached_close_callback:
+            _cached_close_callback[path].cancel()
     image = _cached[path]
 
     if _cached[path].number_of_frames > 1:
-        _cached_close_callback[path] = loop.call_later(1, _close_image, path)
+        _cached_close_callback[path] = loop.call_later(2, _close_image, path)
 
     try:
         for frame in frames:
@@ -70,7 +71,7 @@ def get_frames(path: str, frames: list[int], boundary: str):
             yield image.read_frame_raw(frame - 1)
             yield f'\r\n--{boundary}--\r\n'.encode()
     finally:
-        if _cached[path].number_of_frames == 1:
+        if _cached[path].number_of_frames <= 1:
             _close_image(path)
 
 
