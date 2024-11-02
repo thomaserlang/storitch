@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os.path
 
 import filetype
@@ -65,15 +66,17 @@ async def set_image_info(file_info: schemas.FileInfo, path: str):
 
     if not config.extract_metadata:
         return
-
-    if file_info.extension == 'dcm':
-        elements = await run_in_threadpool(get_dicom_elements, path)
-        if elements:
-            file_info.metadata = schemas.Metadata(dicom=elements)
-    else:
-        exif = await run_in_threadpool(get_image_exif, path)
-        if exif:
-            file_info.metadata = schemas.Metadata(exif=exif)
+    try:
+        if file_info.extension == 'dcm':
+            elements = await run_in_threadpool(get_dicom_elements, path)
+            if elements:
+                file_info.metadata = schemas.Metadata(dicom=elements)
+        else:
+            exif = await run_in_threadpool(get_image_exif, path)
+            if exif:
+                file_info.metadata = schemas.Metadata(exif=exif)
+    except Exception as e:
+        logging.exception(e)
 
 
 async def image_width_high(path: str):
@@ -109,14 +112,13 @@ def get_image_exif(path: str):
                     if tag_name:
                         d[tag_name] = (
                             str(value)
-                            if not isinstance(value, str)
-                            and not isinstance(value, int)
-                            and not isinstance(value, tuple)
+                            if not isinstance(value, (str, int, tuple))
                             else value
                         )
                 except Exception:
                     pass
-            return d
+            ta = TypeAdapter(dict[str, dict])
+            return ta.validate_python(d)
     except Exception:
         return None
 
