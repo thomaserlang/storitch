@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from asyncio import TimerHandle
 from typing import Annotated
 from uuid import uuid4
@@ -50,6 +51,9 @@ async def get_dicom_frames(
         raise HTTPException(
             status_code=400, detail='Invalid DICOM file, could not read file'
         )
+    except Exception as e:
+        logging.exception(e)
+        raise HTTPException(status_code=500, detail='Internal server error')
 
 
 def get_frames(path: str, frames: list[int], boundary: str):

@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, HTTPException
 from pydicom.errors import InvalidDicomError
 
@@ -44,3 +46,6 @@ async def get_file_info_route(
         raise HTTPException(
             status_code=400, detail='Invalid DICOM file, could not read file'
         )
+    except Exception as e:
+        logging.exception(e)
+        raise HTTPException(status_code=500, detail='Internal server error')

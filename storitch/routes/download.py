@@ -91,6 +91,9 @@ async def download(
         )
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail='Not found')
+    except Exception as e:
+        logging.exception(e)
+        raise HTTPException(status_code=500, detail='Internal server error')
 
 
 async def convert(path: str):
@@ -120,8 +123,6 @@ async def convert(path: str):
     ]
     size = _get_size(p[1], args)
     save_path = f'{p[0]}@{size}{"." if ext else ""}{ext}'
-
-    logging.error(f'Convert: {save_path}')
 
     if os.path.exists(save_path):
         return save_path
