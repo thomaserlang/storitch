@@ -42,3 +42,16 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content=jsonable_encoder({'detail': exc.errors(), 'body': exc.body}),
     )
+
+@app.exception_handler(Exception)
+async def exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={
+            'code': 0,
+            'message': 'Internal server error',
+        },
+        headers={
+            'access-control-allow-origin': '*',
+        },
+    )
