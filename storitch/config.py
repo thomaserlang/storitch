@@ -19,8 +19,8 @@ class ConfigLoggingModel(BaseModel):
 
 class ConfigModel(BaseSettings):
     model_config = SettingsConfigDict(
-        env_prefix='storitch_',
-        env_nested_delimiter='.',
+        env_prefix='storitch__',
+        env_nested_delimiter='__',
         validate_assignment=True,
         case_sensitive=False,
     )
