@@ -38,6 +38,7 @@ async def session_upload_start(
     x_filename: Annotated[str, Header(description='Filename')] = '',
     x_finished: Annotated[bool, Header(description='Finished uploading')] = True,
 ):
+    x_filename = x_filename.encode().decode('unicode-escape')
     if x_storitch:
         try:
             info = schemas.SessionUploadStart.model_validate(json.loads(x_storitch))
@@ -77,6 +78,7 @@ async def session_upload_append(
     x_session: Annotated[str, Header(description='Upload Session ID')] = '',
     x_finished: Annotated[bool, Header(description='Finished uploading')] = True,
 ):
+    x_filename = x_filename.encode().decode('unicode-escape')
     if x_storitch:
         try:
             info = schemas.SessionUploadAppend.model_validate(json.loads(x_storitch))
