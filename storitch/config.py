@@ -11,7 +11,7 @@ from . import logger
 
 
 class ConfigLoggingModel(BaseModel):
-    level: Literal['notset', 'debug', 'info', 'warn', 'error', 'critical'] = 'warn'
+    level: Literal['notset', 'debug', 'info', 'warning', 'error', 'critical'] = 'warning'
     path: str | None = None
     max_size: int = 100 * 1000 * 1000  # ~ 95 mb
     num_backups: int = 10
