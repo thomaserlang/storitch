@@ -5,8 +5,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - storitch_api_keys=["test"]
-      - storitch_debug=true
+      - storitch__api_keys=["test"]
+      - storitch__debug=true
     volumes:
       - /var/storitch-test:/var/storitch
       - .:/app
