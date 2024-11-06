@@ -35,7 +35,7 @@ async def session_upload_start(
         str, Header(description='JSON encoded string', deprecated=True)
     ]
     | None = None,
-    x_filename: Annotated[str, Header(description='Filename')] = '',
+    x_filename: Annotated[str, Header(description='Filename (unicode escaped)')] = '',
     x_finished: Annotated[bool, Header(description='Finished uploading')] = True,
 ):
     x_filename = x_filename.encode().decode('unicode-escape')
@@ -74,7 +74,7 @@ async def session_upload_append(
     request: Request,
     api_key: Annotated[str, Security(validate_api_key)],
     x_storitch: Annotated[str | None, Header(deprecated=True)] = None,
-    x_filename: Annotated[str, Header(description='Filename')] = '',
+    x_filename: Annotated[str, Header(description='Filename (unicode escaped)')] = '',
     x_session: Annotated[str, Header(description='Upload Session ID')] = '',
     x_finished: Annotated[bool, Header(description='Finished uploading')] = True,
 ):
