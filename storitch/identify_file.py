@@ -103,23 +103,29 @@ def get_image_exif(path: str):
     try:
         with Image.open(path) as img:
             exif = img.getexif()
+            logging.error(exif)
             if not exif:
                 return {}
             d = {}
             for tag, value in exif.items():
                 tag_name = ExifTags.TAGS.get(tag)
+                if not tag_name:
+                    continue
                 try:
                     if tag_name:
+                        if isinstance(value, tuple):
+                            value = [str(v) for v in value]
                         d[tag_name] = (
                             str(value)
-                            if not isinstance(value, (str, int, tuple))
+                            if not isinstance(value, (str, int, list))
                             else value
                         )
                 except Exception:
                     pass
-            ta = TypeAdapter(dict[str, dict])
+            ta = TypeAdapter(dict[str, str | int | list[str]])
             return ta.validate_python(d)
-    except Exception:
+    except Exception as e:
+        logging.exception(e)
         return None
 
 
@@ -130,5 +136,6 @@ def get_dicom_elements(path: str):
         with pydicom.dcmread(path, stop_before_pixels=True) as dataset:
             ta = TypeAdapter(dict[str, dict])
             return ta.validate_python(dataset.to_json_dict(suppress_invalid_tags=True))
-    except Exception:
+    except Exception as e:
+        logging.exception(e)
         return None

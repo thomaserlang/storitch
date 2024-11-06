@@ -18,13 +18,13 @@ DESCRIPTION = """
     '/file-info/{file_id}',
     name='Get File Info',
     description=DESCRIPTION,
-    response_model=FileInfo,
+    responses={200: {'model': FileInfo}},
 )
 @router.get(
     '/file-info/{file_id}/{filename}',
     name='Get File Info with filename',
     description=DESCRIPTION,
-    response_model=FileInfo,
+    responses={200: {'model': FileInfo}},
 )
 async def get_file_info_route(
     file_id: str,

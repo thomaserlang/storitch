@@ -4,7 +4,7 @@ from pydantic import BaseModel, StringConstraints
 
 
 class Metadata(BaseModel):
-    exif: dict | None = None
+    exif: dict[str, str | int | list[str]] | None = None
     dicom: dict[str, dict] | None = None
 
 

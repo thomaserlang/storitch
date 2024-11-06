@@ -19,7 +19,7 @@ router = APIRouter(tags=['Session Upload'])
 
 @router.post(
     '/store/session',
-    response_model=schemas.UploadResult | schemas.SessionResult,
+    responses={201: {'model': schemas.UploadResult | schemas.SessionResult}},
     status_code=201,
     description="""
 For chunked uploads, `X-Finished` should be false for all but the last chunk.
@@ -61,7 +61,7 @@ async def session_upload_start(
 
 @router.patch(
     '/store/session',
-    response_model=schemas.UploadResult | schemas.SessionResult,
+    responses={200: {'model': schemas.UploadResult | schemas.SessionResult}},
     status_code=200,
     description="""
 `X-Finished` should be false for all but the last chunk.
