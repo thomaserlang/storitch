@@ -31,7 +31,7 @@ def upload_session():
                 headers={
                     'Content-Type': 'application/octet-stream',
                     'X-Session': session,
-                    'X-Filename': 'testæøå.txt',
+                    'X-Filename': 'testæøå.txt'.encode('unicode-escape').decode(),
                     'X-Finished': 'false' if d else 'true',
                     'Authorization': 'test',
                 },
@@ -49,7 +49,7 @@ def upload_session():
             == 'f29bc64a9d3732b4b9035125fdb3285f5b6455778edca72414671e0ca3b2e0de'
         )
         assert j['type'] == 'file'
-        assert j['filename'] == 'testæøå.txt'
+        assert j['filename'] == 'testæøå.txt', j['filename']
 
 
 def thumbnail():

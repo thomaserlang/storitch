@@ -8,5 +8,4 @@ services:
       - storitch__api_keys=["test"]
       - storitch__debug=true
     volumes:
-      - /var/storitch-test:/var/storitch
       - .:/app
