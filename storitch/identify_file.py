@@ -103,7 +103,6 @@ def get_image_exif(path: str):
     try:
         with Image.open(path) as img:
             exif = img.getexif()
-            logging.error(exif)
             if not exif:
                 return {}
             d = {}
