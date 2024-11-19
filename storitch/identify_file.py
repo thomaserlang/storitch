@@ -4,17 +4,48 @@ import os.path
 
 import filetype
 from fastapi.concurrency import run_in_threadpool
-from filetype.types import APPLICATION, ARCHIVE, AUDIO, DOCUMENT, FONT, VIDEO
+from filetype.types import (
+    APPLICATION,
+    ARCHIVE,
+    AUDIO,
+    DOCUMENT,
+    FONT,
+    IMAGE,
+    VIDEO,
+    image,
+)
 from pydantic import TypeAdapter
 
 from storitch import config, schemas
 
 from . import filetype_matchers as filetype_matchers
 
+IMAGE = (
+    image.Dcm(),
+    image.Dwg(),
+    image.Xcf(),
+    image.Jpeg(),
+    image.Jpx(),
+    image.Apng(),
+    image.Png(),
+    image.Gif(),
+    image.Webp(),
+    image.Tiff(),
+    image.Cr2(),
+    image.Bmp(),
+    image.Jxr(),
+    image.Psd(),
+    image.Ico(),
+    image.Heic(),
+    image.Avif(),
+)
+
 
 async def get_file_info(file_path: str, filename: str):
     def identify(file_path: str, filename: str):
-        kind = filetype.guess(file_path)
+        TYPES = list(ARCHIVE + IMAGE + AUDIO + VIDEO + FONT + DOCUMENT + APPLICATION)
+        kind = filetype.match(file_path, TYPES)
+
         if not kind:
             return schemas.FileInfo(
                 type='file',

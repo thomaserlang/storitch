@@ -23,7 +23,7 @@ async def get_dicom_frames(
         str,
         Path(
             description='Comma separated list of frame numbers. 1 based index.',
-            example='1,2',
+            examples=['1', '1,2'],
         ),
     ],
 ):
@@ -50,6 +50,8 @@ async def get_dicom_frames(
         raise HTTPException(
             status_code=400, detail='Invalid DICOM file, could not read file'
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logging.exception(e)
         raise HTTPException(status_code=500, detail='Internal server error')
@@ -65,11 +67,17 @@ def get_frames(path: str, frames: list[int], boundary: str):
     image = _cached[path]
 
     if _cached[path].number_of_frames > 1:
-        _cached_close_callback[path] = loop.call_later(60, _close_image, path)
+        _cached_close_callback[path] = asyncio.get_event_loop().call_later(
+            60, _close_image, path
+        )
 
     try:
         result = b''
         for frame in frames:
+            if frame > image.number_of_frames:
+                raise HTTPException(
+                    status_code=400, detail=f'Frame {frame} does not exist'
+                )
             result += f'--{boundary}\r\n'.encode()
             result += b'Content-Type: application/octet-stream\r\n\r\n'
             result += image.read_frame_raw(frame - 1)
@@ -82,7 +90,6 @@ def get_frames(path: str, frames: list[int], boundary: str):
 
 _cached: dict[str, ImageFileReader] = {}
 _cached_close_callback: dict[str, TimerHandle] = {}
-loop = asyncio.get_event_loop()
 
 
 def _close_image(path: str):

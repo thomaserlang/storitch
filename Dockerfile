@@ -22,8 +22,8 @@ ENV \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PYTHONPATH="${PYTHONPATH}:." \
-    UID=10000 \
-    GID=10001
+    UID=1000 \
+    GID=1000
 
 RUN mkdir /app
 WORKDIR /app
@@ -34,8 +34,8 @@ RUN mv conf/mime.types /etc/mime.types
 RUN pip install --find-links=/wheels -e .
 RUN rm -rf /wheels
 
-RUN addgroup --gid $GID --system storitch && adduser --uid $UID --system --gid $GID storitch && \
-    mkdir /var/storitch && chown storitch:storitch /var/storitch
+RUN addgroup --gid $GID --system storitch && adduser --uid $UID --gid $GID storitch && \
+    mkdir /var/storitch && chown $UID:$GID -R /var/storitch
 USER $UID:$GID
 RUN mkdir /tmp/imagemagick
 
