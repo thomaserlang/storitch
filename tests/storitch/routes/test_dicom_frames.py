@@ -45,5 +45,4 @@ def test_dicom_frames():
             f'/{data[0]["file_id"]}/dicom/frames/1,2',
         )
         assert response.status_code == 200
-        # test that boundry is 3 times in the response
         assert response.text.count('Content-Type:') == 2

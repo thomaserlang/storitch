@@ -43,7 +43,7 @@ IMAGE = (
 
 async def get_file_info(file_path: str, filename: str):
     def identify(file_path: str, filename: str):
-        TYPES = list(ARCHIVE + IMAGE + AUDIO + VIDEO + FONT + DOCUMENT + APPLICATION)
+        TYPES = list(IMAGE + AUDIO + VIDEO + FONT + DOCUMENT + ARCHIVE + APPLICATION)
         kind = filetype.match(file_path, TYPES)
 
         if not kind:
