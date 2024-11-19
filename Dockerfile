@@ -1,6 +1,3 @@
-# Build:
-# docker build -t thomaserlang/storitch .
-# docker push thomaserlang/storitch:latest
 FROM python:3.12-slim-bookworm as pybuilder
 COPY . .
 RUN pip wheel . --wheel-dir=/wheels
