@@ -122,7 +122,9 @@ async def image_width_high(path: str):
         stderr=asyncio.subprocess.PIPE,
     )
     data, error = await p.communicate()
-    if error or not data:
+    if (error and not data) or not data:
+        if error:
+            logging.warning(error)
         return (None, None)
     r = data.decode().split(' ')
     return (int(r[0]), int(r[1]))
