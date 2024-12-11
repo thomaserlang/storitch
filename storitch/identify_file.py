@@ -45,7 +45,8 @@ async def get_file_info(file_path: str, filename: str):
     def identify(file_path: str, filename: str):
         TYPES = list(IMAGE + AUDIO + VIDEO + FONT + DOCUMENT + ARCHIVE + APPLICATION)
         kind = filetype.match(file_path, TYPES)
-
+        import logging
+        logging.error(kind)
         if not kind:
             return schemas.FileInfo(
                 type='file',
@@ -114,6 +115,7 @@ async def image_width_high(path: str):
     # "[0]" is to limit to the first image if e.g. the file is a dicom and contains multiple images
     p = await asyncio.subprocess.create_subprocess_exec(
         'identify',
+        '-quiet',
         '-ping',
         '-format',
         '%w %h',
@@ -122,9 +124,8 @@ async def image_width_high(path: str):
         stderr=asyncio.subprocess.PIPE,
     )
     data, error = await p.communicate()
-    if (error and not data) or not data:
-        if error:
-            logging.warning(error)
+    if error or not data:
+        logging.warning(error.decode())
         return (None, None)
     r = data.decode().split(' ')
     return (int(r[0]), int(r[1]))

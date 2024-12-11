@@ -119,6 +119,7 @@ async def convert(path: str):
             raise HTTPException(status_code=400, detail='Invalid file extension.')
 
     args = [
+        '-quiet',
         '-auto-orient',
     ]
     size = _get_size(p[1], args)
@@ -138,7 +139,7 @@ async def convert(path: str):
     )
     _, error = await p.communicate()
     if error:
-        logging.error(f'{path}: {str(error.decode())}')
+        logging.error(f'{path}: {error.decode()}')
         return
 
     os.chmod(save_path, int(config.file_mode, 8))
