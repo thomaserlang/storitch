@@ -45,8 +45,6 @@ async def get_file_info(file_path: str, filename: str):
     def identify(file_path: str, filename: str):
         TYPES = list(IMAGE + AUDIO + VIDEO + FONT + DOCUMENT + ARCHIVE + APPLICATION)
         kind = filetype.match(file_path, TYPES)
-        import logging
-        logging.error(kind)
         if not kind:
             return schemas.FileInfo(
                 type='file',
