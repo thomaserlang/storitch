@@ -130,7 +130,7 @@ async def convert(path: str):
 
     # "[0]" is to limit to the first image if e.g. the file is a dicom and contains multiple images
     p = await asyncio.subprocess.create_subprocess_exec(
-        'convert',
+        'magick',
         f'{p[0]}[0]',
         *args,
         save_path,
