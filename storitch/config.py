@@ -56,6 +56,7 @@ class ConfigModel(BaseSettings):
     temp_path: str = '/var/storitch/tmp'
     content_disposition_type: str = 'inline'
     extract_metadata: bool = True
+    sentry_dsn: str | None = None
 
 
 config: ConfigModel

@@ -1,8 +1,11 @@
+import sentry_sdk
 from fastapi import FastAPI, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+
+from storitch import config
 
 from .routes import (
     dicom_frames,
@@ -11,6 +14,11 @@ from .routes import (
     health,
     multipart,
     session,
+)
+
+sentry_sdk.init(
+    dsn=config.sentry_dsn,
+    enable_tracing=True,
 )
 
 app = FastAPI(
@@ -42,6 +50,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content=jsonable_encoder({'detail': exc.errors(), 'body': exc.body}),
     )
+
 
 @app.exception_handler(Exception)
 async def exception_handler(request: Request, exc: Exception):
