@@ -33,6 +33,7 @@ class ConfigModel(BaseSettings):
     image_extensions: list[str] = [
         'jpg',
         'jpeg',
+        'jp2',
         'png',
         'tiff',
         'tif',
