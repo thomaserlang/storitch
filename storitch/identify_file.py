@@ -16,8 +16,7 @@ from filetype.types import (
 from pydantic import TypeAdapter
 
 from storitch import config, schemas
-
-from . import filetype_matchers as filetype_matchers
+from storitch.filetype_matchers import M3shapeDCM
 
 IMAGE = (
     image.Dcm(),
@@ -42,10 +41,17 @@ IMAGE = (
 
 async def get_file_info(file_path: str, filename: str):
     def identify(file_path: str, filename: str):
-        TYPES = list(IMAGE + AUDIO + VIDEO + FONT + DOCUMENT + ARCHIVE + APPLICATION)
+        TYPES = list(
+            IMAGE
+            + AUDIO
+            + VIDEO
+            + FONT
+            + DOCUMENT
+            + ARCHIVE
+            + APPLICATION
+            + (M3shapeDCM(),)
+        )
         kind = filetype.match(file_path, TYPES)
-        import logging
-        logging.error(kind)
         if not kind:
             return schemas.FileInfo(
                 type='file',
@@ -68,7 +74,7 @@ async def get_file_info(file_path: str, filename: str):
 
         file_info = schemas.FileInfo(
             type=type_,
-            extension=kind.extension,
+            extension=str(kind.extension),
         )
         return file_info
 

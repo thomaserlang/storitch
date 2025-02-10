@@ -1,5 +1,5 @@
 from filetype import add_type
 
-from . import m3shape_dcm
+from .m3shape_dcm import M3shapeDCM
 
-add_type(m3shape_dcm.M3shapeDCM())
+add_type(M3shapeDCM())
