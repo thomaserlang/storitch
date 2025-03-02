@@ -4,19 +4,18 @@ import os
 import re
 import time
 from mimetypes import guess_type
+from pathlib import Path
 from typing import Annotated
 
-import anyio
-from aiofiles import os as aioos
+from aiofile import async_open
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import StringConstraints
 
-from storitch import config
-
-from .. import store_file
+from storitch import config, store_file
 
 router = APIRouter(tags=['Download'])
+
 
 description = """
 Download a file from the permanent store.
@@ -70,7 +69,7 @@ async def download(
         path = converted
 
     try:
-        stat_result = await aioos.stat(path)
+        stat_result = path.stat()
         media_type = guess_type(filename or file_id)[0] or 'application/octet-stream'
 
         if request.method == 'HEAD':
@@ -97,7 +96,7 @@ async def download(
         raise HTTPException(status_code=500, detail='Internal server error')
 
 
-async def convert(path: str):
+async def convert(path: Path):
     """
     Specify the path and add a "@" followed by the arguments.
 
@@ -105,17 +104,14 @@ async def convert(path: str):
     save the file with the full path, so the server never has to do
     the operation again, as long as the arguments are precisely the same.
     """
-    p = path.split('@')
+    p = str(path).split('@')
     if len(p) != 2:
         raise HTTPException(status_code=400, detail='Invalid thumbnail arguments.')
 
     if len(p[1]) > 40:
         raise HTTPException(status_code=400, detail='Parameters too long, max 40.')
 
-    # get the extension from the path
-    f = os.path.splitext(path)
-    ext = f[1].lower()[1:] if len(f) == 2 else ''
-    if ext:
+    if ext := path.suffix[1:]:
         if ext not in config.image_extensions:
             raise HTTPException(status_code=400, detail='Invalid file extension.')
 
@@ -124,19 +120,20 @@ async def convert(path: str):
         '-auto-orient',
     ]
     size = _get_size(p[1], args)
-    save_path = f'{p[0]}@{size}{"." if ext else ""}{ext}'
+    save_path = Path(f'{p[0]}@{size}{"." if ext else ""}{ext}')
 
-    if os.path.exists(save_path):
+    if save_path.exists():
         return save_path
 
     start_time = time.time()
 
-    # "[0]" is to limit to the first image if e.g. the file is a dicom and contains multiple images
+    # "[0]" is to limit to the first image if e.g.
+    # the file is a dicom and contains multiple images
     p = await asyncio.subprocess.create_subprocess_exec(
         'magick',
         f'{p[0]}[0]',
         *args,
-        save_path,
+        str(save_path),
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
@@ -148,9 +145,9 @@ async def convert(path: str):
         logging.error(f'{path}: {error.decode()}')
         return
     else:
-        logging.info(f'{path} converted ({execution_time:.3f}s)')
+        logging.info(f'{path}: converted ({execution_time:.3f}s)')
 
-    os.chmod(save_path, int(config.file_mode, 8))
+    save_path.chmod(int(config.file_mode, 8))
     return save_path
 
 
@@ -171,7 +168,7 @@ def _get_size(arguments: str, convert_args: list[str]):
 
 def range_requests_response(
     request: Request,
-    path: str,
+    path: Path,
     filename: str,
     media_type: str,
     stat_result: os.stat_result,
@@ -232,10 +229,10 @@ def _get_range_header(range_header: str, file_size: int) -> tuple[int, int]:
     return start, end
 
 
-async def _send_bytes(path: str, start: int, end: int):
-    async with await anyio.open_file(path, mode='rb') as f:
-        await f.seek(start)
-        while (pos := await f.tell()) <= end:
+async def _send_bytes(path: Path, start: int, end: int):
+    async with await async_open(path, mode='rb') as f:
+        f.seek(start)
+        while (pos := f.tell()) <= end:
             read_size = min(FileResponse.chunk_size, end + 1 - pos)
             yield await f.read(read_size)
 

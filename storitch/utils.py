@@ -1,4 +1,5 @@
 import hashlib
+from pathlib import Path
 
 
 def path_from_file_id(hash_: str, levels=2, length=2):
@@ -34,12 +35,12 @@ def path_from_file_id(hash_: str, levels=2, length=2):
 
             /1b/4f
     """
-    path = []
+    path: list[str] = []
     for i in range(0, levels):
         path.append(hash_[i * length : (i * length) + length])
-    return '/'.join(path)
+    return Path(*path)
 
 
-def file_sha256(path):
+def file_sha256(path: Path):
     with open(path, 'rb') as f:
         return hashlib.file_digest(f, 'sha256').hexdigest()

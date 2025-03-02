@@ -1,18 +1,17 @@
 import json
-import os
 import uuid
+from pathlib import Path
 from typing import Annotated, Literal
 
-import aiofiles
-from aiofiles import os as aioos
+from aiofile import async_open
 from fastapi import APIRouter, Header, HTTPException, Request, Security
 from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
 from starlette.concurrency import run_in_threadpool
 
-from .. import config, schemas, utils
-from ..security import validate_api_key
-from ..store_file import create_store_folder, upload_result
+from storitch import config, schemas, utils
+from storitch.security import validate_api_key
+from storitch.store_file import create_store_folder, upload_result
 
 router = APIRouter(tags=['Session Upload'])
 
@@ -102,21 +101,17 @@ async def session_upload_append(
 async def save(
     request: Request, session: str, filename: str, finished: bool, new: bool
 ):
-    temp_path = os.path.join(
-        config.temp_path,
-        session,
-    )
-    if not new and not await aioos.path.exists(temp_path):
+    temp_path = Path(config.temp_path) / session
+    if not new and not temp_path.exists():
         raise HTTPException(status_code=400, detail='Upload session not found')
-    async with aiofiles.open(temp_path, mode='wb' if new else 'ab') as f:
+    async with async_open(temp_path, mode='wb' if new else 'ab') as f:
         async for chunk in request.stream():
             await f.write(chunk)
     if finished:
         hash_ = await run_in_threadpool(utils.file_sha256, temp_path)
         file_id = str(uuid.uuid4())
-        dir = await create_store_folder(file_id)
-        path = os.path.join(dir, file_id)
-        await aioos.rename(temp_path, path)
-        os.chmod(path, int(config.file_mode, 8))
+        path = await create_store_folder(file_id) / file_id
+        await run_in_threadpool(temp_path.rename, path)
+        path.chmod(int(config.file_mode, 8))
         return await upload_result(file_id, hash_, filename)
     return schemas.SessionResult(session=session)

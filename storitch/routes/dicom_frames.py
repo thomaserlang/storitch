@@ -1,14 +1,16 @@
 import asyncio
 import logging
 from asyncio import TimerHandle
+from pathlib import Path
 from typing import Annotated
 from uuid import uuid4
 
-from fastapi import APIRouter, HTTPException, Path, Response
+from fastapi import APIRouter, HTTPException, Query, Response
+from fastapi import Path as PathParam
 from highdicom.io import ImageFileReader
 from pydicom.errors import InvalidDicomError
 
-from storitch import store_file
+from storitch.store_file import get_file_path
 
 router = APIRouter(tags=['DICOM'])
 
@@ -21,7 +23,7 @@ async def get_dicom_frames(
     file_id: str,
     frames: Annotated[
         str,
-        Path(
+        PathParam(
             description='Comma separated list of frame numbers. 1 based index.',
             examples=['1', '1,2'],
         ),
@@ -31,9 +33,7 @@ async def get_dicom_frames(
     try:
         boundary = str(uuid4())
         return Response(
-            content=get_frames(
-                store_file.get_file_path(file_id), frame_numbers, boundary
-            ),
+            content=get_frames(get_file_path(file_id), frame_numbers, boundary),
             headers={
                 'Content-Type': f'multipart/related; boundary={boundary}',
             },
@@ -57,7 +57,7 @@ async def get_dicom_frames(
         raise HTTPException(status_code=500, detail='Internal server error')
 
 
-def get_frames(path: str, frames: list[int], boundary: str):
+def get_frames(path: Path, frames: list[int], boundary: str):
     if path not in _cached:
         _cached[path] = ImageFileReader(path)
         _cached[path].open()
@@ -88,11 +88,11 @@ def get_frames(path: str, frames: list[int], boundary: str):
             _close_image(path)
 
 
-_cached: dict[str, ImageFileReader] = {}
-_cached_close_callback: dict[str, TimerHandle] = {}
+_cached: dict[Path, ImageFileReader] = {}
+_cached_close_callback: dict[Path, TimerHandle] = {}
 
 
-def _close_image(path: str):
+def _close_image(path: Path):
     if path in _cached:
         _cached[path].close()
         del _cached[path]

@@ -3,9 +3,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Security, UploadFile
 
-from .. import schemas
-from ..security import validate_api_key
-from ..store_file import move_to_permanent_store
+from storitch import schemas
+from storitch.security import validate_api_key
+from storitch.store_file import move_to_permanent_store
 
 router = APIRouter()
 

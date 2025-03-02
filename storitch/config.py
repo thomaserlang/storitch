@@ -1,6 +1,7 @@
 import logging
 import os
 import tempfile
+from pathlib import Path
 from typing import Literal
 
 import yaml
@@ -11,7 +12,7 @@ from . import logger
 
 
 class ConfigLoggingModel(BaseModel):
-    level: Literal['notset', 'debug', 'info', 'warning', 'error', 'critical'] = 'warning'
+    level: Literal['notset', 'debug', 'info', 'warning', 'error', 'critical'] = 'info'
     path: str | None = None
     max_size: int = 100 * 1000 * 1000  # ~ 95 mb
     num_backups: int = 10
@@ -27,7 +28,7 @@ class ConfigModel(BaseSettings):
 
     debug: bool = False
     port: int = 3000
-    store_path: str = '/var/storitch'
+    store_path: Path = Path('/var/storitch')
     api_keys: list[str] = []
     logging: ConfigLoggingModel = ConfigLoggingModel()
     image_extensions: list[str] = [

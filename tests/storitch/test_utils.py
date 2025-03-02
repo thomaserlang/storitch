@@ -1,4 +1,5 @@
 import unittest
+from pathlib import Path
 
 from storitch.utils import path_from_file_id
 
@@ -13,7 +14,7 @@ class Test(unittest.TestCase):
             length=2,
         )
         self.assertEqual(
-            '1b',
+            Path('1b'),
             path,
         )
 
@@ -23,7 +24,7 @@ class Test(unittest.TestCase):
             length=2,
         )
         self.assertEqual(
-            '1b/4f',
+            Path('1b/4f'),
             path,
         )
 
@@ -33,7 +34,7 @@ class Test(unittest.TestCase):
             length=3,
         )
         self.assertEqual(
-            '1b4/f0e/985',
+            Path('1b4/f0e/985'),
             path,
         )
 

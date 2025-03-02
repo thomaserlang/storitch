@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os.path
+from pathlib import Path
 
 import filetype
 from fastapi.concurrency import run_in_threadpool
@@ -39,8 +40,8 @@ IMAGE = (
 )
 
 
-async def get_file_info(file_path: str, filename: str):
-    def identify(file_path: str, filename: str):
+async def get_file_info(file_path: Path, filename: str):
+    def identify(file_path: Path, filename: str):
         TYPES = list(
             IMAGE
             + AUDIO
@@ -93,7 +94,7 @@ def get_file_ext(filename: str):
     return d[1].lower()[1:]
 
 
-async def set_image_info(file_info: schemas.FileInfo, path: str):
+async def set_image_info(file_info: schemas.FileInfo, path: Path):
     width, height = await image_width_high(path)
 
     file_info.width = width
@@ -116,7 +117,7 @@ async def set_image_info(file_info: schemas.FileInfo, path: str):
         logging.exception(e)
 
 
-async def image_width_high(path: str):
+async def image_width_high(path: Path):
     # "[0]" is to limit to the first image if e.g. the file is a dicom and contains multiple images
     p = await asyncio.subprocess.create_subprocess_exec(
         'identify',
@@ -137,7 +138,7 @@ async def image_width_high(path: str):
     return (int(r[0]), int(r[1]))
 
 
-def get_image_exif(path: str):
+def get_image_exif(path: Path):
     from PIL import ExifTags, Image
 
     try:
@@ -168,7 +169,7 @@ def get_image_exif(path: str):
         return None
 
 
-def get_dicom_elements(path: str):
+def get_dicom_elements(path: Path):
     import pydicom
 
     try:
