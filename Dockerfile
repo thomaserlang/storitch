@@ -10,7 +10,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y wget
 
 
 # ImageMagick (https://github.com/dooman87/imagemagick-docker) 
-ARG IM_VERSION=7.1.1-41
+ARG IM_VERSION=7.1.1-44
 ARG LIB_HEIF_VERSION=1.19.5
 ARG LIB_AOM_VERSION=3.11.0
 ARG LIB_WEBP_VERSION=1.4.0
