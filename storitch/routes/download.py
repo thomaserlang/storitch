@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 import re
+import time
 from mimetypes import guess_type
 from typing import Annotated
 
@@ -128,6 +129,8 @@ async def convert(path: str):
     if os.path.exists(save_path):
         return save_path
 
+    start_time = time.time()
+
     # "[0]" is to limit to the first image if e.g. the file is a dicom and contains multiple images
     p = await asyncio.subprocess.create_subprocess_exec(
         'magick',
@@ -138,9 +141,14 @@ async def convert(path: str):
         stderr=asyncio.subprocess.PIPE,
     )
     _, error = await p.communicate()
+
+    execution_time = time.time() - start_time
+
     if error:
         logging.error(f'{path}: {error.decode()}')
         return
+    else:
+        logging.info(f'{path} converted ({execution_time:.3f}s)')
 
     os.chmod(save_path, int(config.file_mode, 8))
     return save_path
