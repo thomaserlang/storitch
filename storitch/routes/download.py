@@ -230,7 +230,7 @@ def _get_range_header(range_header: str, file_size: int) -> tuple[int, int]:
 
 
 async def _send_bytes(path: Path, start: int, end: int):
-    async with await async_open(path, mode='rb') as f:
+    async with async_open(path, mode='rb') as f:
         f.seek(start)
         while (pos := f.tell()) <= end:
             read_size = min(FileResponse.chunk_size, end + 1 - pos)
