@@ -1,20 +1,20 @@
-FROM python:3.12-slim-bookworm AS pybuilder
+FROM python:3.13-slim-bookworm AS pybuilder
 COPY . .
 RUN pip wheel . --wheel-dir=/wheels
 
-FROM dpokidov/imagemagick:7.1.1-41-bullseye AS imagemagick
+FROM dpokidov/imagemagick:7.1.1-47-bullseye AS imagemagick
 
-FROM python:3.12-slim-bookworm
+FROM python:3.13-slim-bookworm
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y wget
 
 
 # ImageMagick (https://github.com/dooman87/imagemagick-docker) 
-ARG IM_VERSION=7.1.1-44
-ARG LIB_HEIF_VERSION=1.19.5
-ARG LIB_AOM_VERSION=3.11.0
-ARG LIB_WEBP_VERSION=1.4.0
-ARG LIBJXL_VERSION=0.11.0
+ARG IM_VERSION=7.1.1-47
+ARG LIB_HEIF_VERSION=1.19.8
+ARG LIB_AOM_VERSION=3.12.1
+ARG LIB_WEBP_VERSION=1.5.0
+ARG LIBJXL_VERSION=0.11.1
 
 RUN apt-get install -y --no-install-recommends git make pkg-config autoconf curl cmake clang libomp-dev ca-certificates automake \
     # libaom

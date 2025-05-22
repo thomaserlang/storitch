@@ -17,8 +17,7 @@ from .routes import (
 )
 
 sentry_sdk.init(
-    dsn=config.sentry_dsn,
-    enable_tracing=True,
+    dsn=config.sentry_dsn
 )
 
 app = FastAPI(
