@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Annotated
 from uuid import uuid4
 
-from fastapi import APIRouter, HTTPException, Query, Response
+from fastapi import APIRouter, HTTPException, Response
 from fastapi import Path as PathParam
 from highdicom.io import ImageFileReader
 from pydicom.errors import InvalidDicomError
