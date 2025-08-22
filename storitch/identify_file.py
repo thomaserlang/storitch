@@ -18,6 +18,7 @@ from pydantic import TypeAdapter
 
 from storitch import config, schemas
 from storitch.filetype_matchers import M3shapeDCM
+from storitch.ignore_errors import ignore_error
 
 IMAGE = (
     image.Dcm(),
@@ -130,7 +131,7 @@ async def image_width_high(path: Path):
         stderr=asyncio.subprocess.PIPE,
     )
     data, error = await p.communicate()
-    if error or not data:
+    if (error and not ignore_error(error.decode())) or not data:
         logging.error(data)
         logging.warning(error.decode())
         return (None, None)

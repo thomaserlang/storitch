@@ -13,6 +13,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import StringConstraints
 
 from storitch import config, store_file
+from storitch.identify_file import ignore_error
 
 router = APIRouter(tags=['Download'])
 
@@ -131,6 +132,8 @@ async def convert(path: Path):
     # the file is a dicom and contains multiple images
     p = await asyncio.subprocess.create_subprocess_exec(
         'magick',
+        '-define',
+        'bmp:ignore-filesize=true',
         f'{p[0]}[0]',
         *args,
         str(save_path),
@@ -141,7 +144,7 @@ async def convert(path: Path):
 
     execution_time = time.time() - start_time
 
-    if error:
+    if error and not ignore_error(error.decode()):
         logging.error(f'{path}: {error.decode()}')
         return
     else:
@@ -189,8 +192,7 @@ def range_requests_response(
     headers['accept-ranges'] = 'bytes'
     headers['content-encoding'] = 'identity'
     headers['access-control-expose-headers'] = (
-        'content-type, accept-ranges, content-length, '
-        'content-range, content-encoding'
+        'content-type, accept-ranges, content-length, content-range, content-encoding'
     )
     start = 0
     end = file_size - 1
