@@ -1,5 +1,6 @@
 import tempfile
 from io import StringIO
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 
@@ -11,7 +12,7 @@ client = TestClient(app)
 
 def test_session():
     with tempfile.TemporaryDirectory() as temp_dir:
-        config.store_path = temp_dir
+        config.store_path = Path(temp_dir)
         config.api_keys = ['test']
         file = StringIO('this is a test file')
         start = True

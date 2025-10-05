@@ -1,5 +1,6 @@
 import os
 import tempfile
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 
@@ -11,7 +12,7 @@ client = TestClient(app)
 
 def test_metadata():
     with tempfile.TemporaryDirectory() as temp_dir:
-        config.store_path = temp_dir
+        config.store_path = Path(temp_dir)
         config.api_keys = ['test']
         file1 = os.path.realpath(__file__ + '/../../../Canon_40D.jpg')
         response = client.post(
