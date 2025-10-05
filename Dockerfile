@@ -10,10 +10,10 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y wget
 
 
 # ImageMagick (https://github.com/dooman87/imagemagick-docker) 
-ARG IM_VERSION=7.1.1-47
-ARG LIB_HEIF_VERSION=1.19.8
-ARG LIB_AOM_VERSION=3.12.1
-ARG LIB_WEBP_VERSION=1.5.0
+ARG IM_VERSION=7.1.2-3
+ARG LIB_HEIF_VERSION=1.20.2
+ARG LIB_AOM_VERSION=3.13.1
+ARG LIB_WEBP_VERSION=1.6.0
 ARG LIBJXL_VERSION=0.11.1
 
 RUN apt-get install -y --no-install-recommends git make pkg-config autoconf curl cmake clang libomp-dev ca-certificates automake \
@@ -76,7 +76,7 @@ RUN apt-get install -y --no-install-recommends git make pkg-config autoconf curl
 ENV \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    PYTHONPATH="${PYTHONPATH}:." \
+    PYTHONPATH="." \
     UID=1000 \
     GID=1000
 
