@@ -1,8 +1,16 @@
-FROM python:3.13-slim-bookworm AS pybuilder
-COPY . .
-RUN pip wheel . --wheel-dir=/wheels
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm AS pybuilder
+ENV UV_PYTHON_DOWNLOADS=0
 
-FROM dpokidov/imagemagick:7.1.1-47-bullseye AS imagemagick
+WORKDIR /app
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --frozen --no-install-project --no-dev
+ADD . /app
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev
+
+FROM dpokidov/imagemagick:7.1.1-47-bookworm AS imagemagick
 
 FROM python:3.13-slim-bookworm
 
@@ -11,7 +19,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y wget
 
 # ImageMagick (https://github.com/dooman87/imagemagick-docker) 
 ARG IM_VERSION=7.1.2-3
-ARG LIB_HEIF_VERSION=1.20.2
+ARG LIB_HEIF_VERSION=1.21.2
 ARG LIB_AOM_VERSION=3.13.1
 ARG LIB_WEBP_VERSION=1.6.0
 ARG LIBJXL_VERSION=0.11.1
@@ -73,28 +81,24 @@ RUN apt-get install -y --no-install-recommends git make pkg-config autoconf curl
     rm -rf /ImageMagick
 
 
-ENV \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    PYTHONPATH="." \
-    UID=1000 \
+
+COPY --from=pybuilder --chown=app:app /app /app
+
+ENV PATH="/app/.venv/bin:$PATH"
+ENV PYTHONPATH="."
+
+ENV UID=1000 \
     GID=1000
 
-RUN mkdir /app
-WORKDIR /app
-COPY . .
-COPY --from=pybuilder /wheels /wheels
-
-RUN mv conf/policy.xml /usr/local/etc/ImageMagick-7/policy.xml
-RUN mv conf/mime.types /etc/mime.types
-
-RUN pip install --find-links=/wheels -e .
-RUN rm -rf /wheels
+RUN mv /app/conf/policy.xml /usr/local/etc/ImageMagick-7/policy.xml
+RUN mv /app/conf/mime.types /etc/mime.types
 
 RUN addgroup --gid $GID --system storitch && adduser --uid $UID --gid $GID storitch && \
     mkdir /var/storitch && chown $UID:$GID -R /var/storitch
 USER $UID:$GID
 RUN mkdir /tmp/imagemagick
+
+WORKDIR /app
 
 VOLUME /var/storitch
 ENTRYPOINT ["python", "storitch/runner.py"]
