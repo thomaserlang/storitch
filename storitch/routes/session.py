@@ -106,7 +106,8 @@ async def save(
         raise HTTPException(status_code=400, detail='Upload session not found')
     async with async_open(temp_path, mode='wb' if new else 'ab') as f:
         async for chunk in request.stream():
-            await f.write(chunk)
+            if chunk:
+                await f.write(chunk)
     if finished:
         hash_ = await run_in_threadpool(utils.file_sha256, temp_path)
         file_id = str(uuid.uuid4())
