@@ -104,16 +104,9 @@ async def save(
     temp_path = Path(config.temp_path) / session
     if not new and not temp_path.exists():
         raise HTTPException(status_code=400, detail='Upload session not found')
-    chunk_count = 0
     async with async_open(temp_path, mode='wb' if new else 'ab') as f:
         async for chunk in request.stream():
             await f.write(chunk)
-            chunk_count += 1
-            if chunk_count % 30 == 0:
-                # Fixes NFS issue with: `Errno 5 Input/output error`
-                # It started happening after a system upgrade and python upgrade
-                # Not sure why, tested with 100 and it failed, 50 worked so 30 seems safe
-                await f.flush()
     if finished:
         hash_ = await run_in_threadpool(utils.file_sha256, temp_path)
         file_id = str(uuid.uuid4())
