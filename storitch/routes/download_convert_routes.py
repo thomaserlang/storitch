@@ -132,6 +132,12 @@ async def convert(path: Path) -> Path | None:
         try:
             await run_in_threadpool(vips_convert, p[0], str(save_path), args)
         except pyvips.Error as e:
+            if save_path.exists():
+                logging.info(
+                    'Possible race condition, file was created during '
+                    'conversion failure, returning file'
+                )
+                return save_path
             if config.allow_imagemagick_fallback:
                 logging.info(
                     f'{path}: vips conversion failed, falling back to ImageMagick'
@@ -144,6 +150,12 @@ async def convert(path: Path) -> Path | None:
         save_path.chmod(int(config.file_mode, 8))
         return save_path
     except Exception as e:
+        if save_path.exists():
+            logging.info(
+                'Possible race condition, file was created during '
+                'conversion failure, returning file'
+            )
+            return save_path
         logging.error(f'{path}: {e}')
         return None
 
