@@ -15,10 +15,11 @@ dependencies = [
     "filetype>=1.2.0",
     "highdicom[libjpeg]>=0.26.1",
     "sentry-sdk>=2.39.0",
+    "pyvips[binary]>=3.1.1",
 ]
 requires-python = ">=3.13"
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = ["requests>=2.32.3", "httpx>=0.28.1", "pytest>=8.3.5"]
 
 
@@ -32,4 +33,5 @@ requires = ["flit_core>=3.2,<4"]
 quote-style = "single"
 
 [tool.ruff.lint]
-select = ["E4", "E7", "E9", "F", "I"]
+select = ["E", "F", "UP", "B", "I", "FAST", "ANN", "RET"]
+ignore = ['ANN401']

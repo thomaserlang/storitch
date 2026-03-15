@@ -10,7 +10,7 @@ from storitch.main import app
 client = TestClient(app)
 
 
-def test_multipart():
+def test_multipart() -> None:
     with tempfile.TemporaryDirectory() as temp_dir:
         config.store_path = Path(temp_dir)
         config.api_keys = ['test']

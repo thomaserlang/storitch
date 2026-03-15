@@ -11,7 +11,7 @@ def cli() -> None: ...
 
 
 @cli.command()
-def api():
+def api() -> None:
     logging.basicConfig(level=logging.INFO, format='%(message)s')
     logging.info(f'Storitch started on port {config.port}')
     uvicorn.run(
@@ -26,7 +26,7 @@ def api():
 
 
 @cli.command()
-def cache_cleanup():
+def cache_cleanup() -> None:
     from storitch.cache_cleanup import cache_cleanup
 
     cache_cleanup()

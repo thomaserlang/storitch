@@ -3,17 +3,20 @@ import logging
 import os
 import re
 import time
+from collections.abc import AsyncGenerator
 from mimetypes import guess_type
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
+import pyvips
 from aiofile import async_open
 from fastapi import APIRouter, HTTPException, Request, status
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import StringConstraints
 
 from storitch import config, store_file
-from storitch.identify_file import ignore_error
+from storitch.ignore_errors import ignore_error
 
 router = APIRouter(tags=['Download'])
 
@@ -55,7 +58,7 @@ it to a PNG file.
 )
 @router.head('/{file_id}', description=description)
 @router.head('/{file_id}/{filename}', description=description)
-async def download(
+async def download_route(  # noqa: ANN201
     file_id: Annotated[
         str, StringConstraints(pattern=r'[a-zA-Z0-9-]+(@[a-zA-Z0-9_\-.]+)?')
     ],
@@ -90,14 +93,14 @@ async def download(
             media_type=media_type,
             stat_result=stat_result,
         )
-    except FileNotFoundError:
-        raise HTTPException(status_code=404, detail='Not found')
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail='Not found') from e
     except Exception as e:
         logging.exception(e)
-        raise HTTPException(status_code=500, detail='Internal server error')
+        raise HTTPException(status_code=500, detail='Internal server error') from e
 
 
-async def convert(path: Path):
+async def convert(path: Path) -> Path | None:
     """
     Specify the path and add a "@" followed by the arguments.
 
@@ -105,6 +108,7 @@ async def convert(path: Path):
     save the file with the full path, so the server never has to do
     the operation again, as long as the arguments are precisely the same.
     """
+
     p = str(path).split('@')
     if len(p) != 2:
         raise HTTPException(status_code=400, detail='Invalid thumbnail arguments.')
@@ -112,14 +116,11 @@ async def convert(path: Path):
     if len(p[1]) > 40:
         raise HTTPException(status_code=400, detail='Parameters too long, max 40.')
 
-    if ext := path.suffix[1:]:
-        if ext not in config.image_extensions:
-            raise HTTPException(status_code=400, detail='Invalid file extension.')
+    ext = path.suffix[1:]
+    if ext and ext not in config.image_extensions:
+        raise HTTPException(status_code=400, detail='Invalid file extension.')
 
-    args = [
-        '-quiet',
-        '-auto-orient',
-    ]
+    args: dict[str, int] = {}
     size = _get_size(p[1], args)
     save_path = Path(f'{p[0]}@{size}{"." if ext else ""}{ext}')
 
@@ -127,6 +128,55 @@ async def convert(path: Path):
         return save_path
 
     start_time = time.time()
+    try:
+        try:
+            await run_in_threadpool(vips_convert, p[0], str(save_path), args)
+        except pyvips.Error as e:
+            if config.allow_imagemagick_fallback:
+                logging.info(
+                    f'{path}: vips conversion failed, falling back to ImageMagick'
+                )
+                await imagemagick_convert(p[0], str(save_path), args)
+            else:
+                raise e
+        execution_time = time.time() - start_time
+        logging.info(f'{path}: converted ({execution_time:.3f}s)')
+        save_path.chmod(int(config.file_mode, 8))
+        return save_path
+    except Exception as e:
+        logging.error(f'{path}: {e}')
+        return None
+
+
+def vips_convert(path: str, save_path: str, args: dict[str, int]) -> str:
+    image: Any = pyvips.Image.new_from_file(path, access='sequential')
+
+    image = image.autorot()
+
+    if 'width' in args:
+        factor = args['width'] / image.width
+        image = image.resize(factor)
+    elif 'height' in args:
+        factor = args['height'] / image.height
+        image = image.resize(factor)
+
+    image.write_to_file(str(save_path))
+
+    return save_path
+
+
+async def imagemagick_convert(path: str, save_path: str, args: dict[str, int]) -> str:
+    convert_args = [
+        '-quiet',
+        '-auto-orient',
+    ]
+
+    if 'width' in args or 'height' in args:
+        convert_args.append('-thumbnail')
+        if 'width' in args:
+            convert_args.append(f'{args["width"]}x')
+        else:
+            convert_args.append(f'x{args["height"]}')
 
     # "[0]" is to limit to the first image if e.g.
     # the file is a dicom and contains multiple images
@@ -134,37 +184,29 @@ async def convert(path: Path):
         'magick',
         '-define',
         'bmp:ignore-filesize=true',
-        f'{p[0]}[0]',
-        *args,
+        f'{path}[0]',
+        *convert_args,
         str(save_path),
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
     _, error = await p.communicate()
-
-    execution_time = time.time() - start_time
-
     if error and not ignore_error(error.decode()):
-        logging.error(f'{path}: {error.decode()}')
-        return
-    else:
-        logging.info(f'{path}: converted ({execution_time:.3f}s)')
+        raise Exception(f'ImageMagick conversion failed: {error.decode()}')
 
-    save_path.chmod(int(config.file_mode, 8))
     return save_path
 
 
-def _get_size(arguments: str, convert_args: list[str]):
+def _get_size(arguments: str, convert_args: dict[str, int]) -> str:
     size_match = re.search(r'SX([0-9]+)|SY([0-9]+)', arguments, re.I)
     if size_match:
-        convert_args.append('-thumbnail')
         if size_match.group(1):
             is_allowed_resize_size(int(size_match.group(1)))
-            convert_args.append(f'{size_match.group(1)}x')
+            convert_args['width'] = int(size_match.group(1))
             return f'SX{size_match.group(1)}'
-        elif size_match.group(2):
+        if size_match.group(2):
             is_allowed_resize_size(int(size_match.group(2)))
-            convert_args.append(f'x{size_match.group(2)}')
+            convert_args['height'] = int(size_match.group(2))
             return f'SY{size_match.group(2)}'
     return ''
 
@@ -175,7 +217,7 @@ def range_requests_response(
     filename: str,
     media_type: str,
     stat_result: os.stat_result,
-):
+) -> StreamingResponse:
     """Returns StreamingResponse using Range Requests of a given file"""
 
     file_size = stat_result.st_size
@@ -213,7 +255,7 @@ def range_requests_response(
 
 
 def _get_range_header(range_header: str, file_size: int) -> tuple[int, int]:
-    def _invalid_range():
+    def _invalid_range() -> HTTPException:
         return HTTPException(
             status.HTTP_416_REQUESTED_RANGE_NOT_SATISFIABLE,
             detail=f'Invalid request range (Range:{range_header!r})',
@@ -223,15 +265,15 @@ def _get_range_header(range_header: str, file_size: int) -> tuple[int, int]:
         h = range_header.replace('bytes=', '').split('-')
         start = int(h[0]) if h[0] != '' else 0
         end = int(h[1]) if h[1] != '' else file_size - 1
-    except ValueError:
-        raise _invalid_range()
+    except ValueError as e:
+        raise _invalid_range() from e
 
     if start > end or start < 0 or end > file_size - 1:
         raise _invalid_range()
     return start, end
 
 
-async def _send_bytes(path: Path, start: int, end: int):
+async def _send_bytes(path: Path, start: int, end: int) -> AsyncGenerator[bytes]:
     async with async_open(path, mode='rb') as f:
         f.seek(start)
         while (pos := f.tell()) <= end:
@@ -239,7 +281,7 @@ async def _send_bytes(path: Path, start: int, end: int):
             yield await f.read(read_size)
 
 
-def is_allowed_resize_size(size: int):
+def is_allowed_resize_size(size: int) -> bool:
     if config.allowed_resizes and size not in config.allowed_resizes:
         raise HTTPException(status_code=400, detail=f'Size {size} not allowed.')
     return True

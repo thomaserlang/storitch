@@ -8,13 +8,16 @@ def set_logger(
     path: str | None = None,
     max_size: int | None = None,
     num_backups: int | None = None,
-    level='INFO',
-):
+    level: str = 'INFO',
+) -> None:
     logger = logging.getLogger()
     logger.setLevel(level.upper())
 
     format_ = logging.Formatter(
-        fmt='[%(asctime)s.%(msecs)-3d] %(levelname)-8s %(message)s (%(filename)s:%(lineno)d)',
+        fmt=(
+            '[%(asctime)s.%(msecs)-3d] %(levelname)-8s '
+            '%(message)s (%(filename)s:%(lineno)d)'
+        ),
         datefmt='%Y-%m-%dT%H:%M:%S',
     )
     if path and filename:

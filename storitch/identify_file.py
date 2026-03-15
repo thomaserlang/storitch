@@ -41,8 +41,8 @@ IMAGE = (
 )
 
 
-async def get_file_info(file_path: Path, filename: str):
-    def identify(file_path: Path, filename: str):
+async def get_file_info(file_path: Path, filename: str = '') -> schemas.FileInfo:
+    def identify(file_path: Path, filename: str) -> schemas.FileInfo:
         TYPES = list(
             IMAGE
             + AUDIO
@@ -74,11 +74,10 @@ async def get_file_info(file_path: Path, filename: str):
         elif kind in FONT:
             type_ = 'font'
 
-        file_info = schemas.FileInfo(
+        return schemas.FileInfo(
             type=type_,
             extension=str(kind.extension),
         )
-        return file_info
 
     file_info = await run_in_threadpool(
         identify, file_path=file_path, filename=filename
@@ -88,14 +87,14 @@ async def get_file_info(file_path: Path, filename: str):
     return file_info
 
 
-def get_file_ext(filename: str):
+def get_file_ext(filename: str) -> str:
     d = os.path.splitext(filename)
     if len(d) != 2:
         return ''
     return d[1].lower()[1:]
 
 
-async def set_image_info(file_info: schemas.FileInfo, path: Path):
+async def set_image_info(file_info: schemas.FileInfo, path: Path) -> None:
     width, height = await image_width_high(path)
 
     file_info.width = width
@@ -118,8 +117,9 @@ async def set_image_info(file_info: schemas.FileInfo, path: Path):
         logging.exception(e)
 
 
-async def image_width_high(path: Path):
-    # "[0]" is to limit to the first image if e.g. the file is a dicom and contains multiple images
+async def image_width_high(path: Path) -> tuple[int | None, int | None]:
+    # "[0]" is to limit to the first image if e.g.
+    #  the file is a dicom and contains multiple images
     p = await asyncio.subprocess.create_subprocess_exec(
         'identify',
         '-quiet',
@@ -139,7 +139,7 @@ async def image_width_high(path: Path):
     return (int(r[0]), int(r[1]))
 
 
-def get_image_exif(path: Path):
+def get_image_exif(path: Path) -> dict[str, str | int | list[str]] | None:
     from PIL import ExifTags, Image
 
     try:
@@ -170,7 +170,7 @@ def get_image_exif(path: Path):
         return None
 
 
-def get_dicom_elements(path: Path):
+def get_dicom_elements(path: Path) -> dict[str, dict] | None:
     import pydicom
 
     try:

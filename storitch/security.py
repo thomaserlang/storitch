@@ -7,7 +7,7 @@ from . import config
 
 async def validate_api_key(
     authorization: Annotated[str, Header(description='API Key')],
-):
+) -> str:
     if authorization in config.api_keys:
         return authorization
     raise HTTPException(status_code=403, detail='Invalid API Key')

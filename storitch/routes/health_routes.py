@@ -7,7 +7,7 @@ router = APIRouter()
 
 
 @router.get('/health', response_class=PlainTextResponse)
-async def health(response: Response):
+async def health(response: Response) -> str:
     if not config.store_path.exists():
         response.status_code = 500
         return 'ERROR - store_path does not exist'

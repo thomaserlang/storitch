@@ -2,7 +2,7 @@ import hashlib
 from pathlib import Path
 
 
-def path_from_file_id(hash_: str, levels=2, length=2):
+def path_from_file_id(hash_: str, levels: int = 2, length: int = 2) -> Path:
     """
     1b4f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567014
 
@@ -41,6 +41,6 @@ def path_from_file_id(hash_: str, levels=2, length=2):
     return Path(*path)
 
 
-def file_sha256(path: Path):
+def file_sha256(path: Path) -> str:
     with open(path, 'rb') as f:
         return hashlib.file_digest(f, 'sha256').hexdigest()

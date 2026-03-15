@@ -10,11 +10,11 @@ from storitch.store_file import move_to_permanent_store
 router = APIRouter()
 
 
-@router.post('/store', response_model=list[schemas.UploadResult], status_code=201)
-async def store(
+@router.post('/store', status_code=201)
+async def store_route(
     file: list[UploadFile],
     api_key: Annotated[str, Security(validate_api_key)],
-):
+) -> list[schemas.UploadResult]:
     return await asyncio.gather(
         *[move_to_permanent_store(f, f.filename or '') for f in file]
     )

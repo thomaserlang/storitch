@@ -3,7 +3,7 @@ import logging
 from storitch import config
 
 
-def cache_cleanup():
+def cache_cleanup() -> None:
     logging.info(f'Started cache cleanup of {config.store_path}')
     deleted_files = 0
     total_size = 0

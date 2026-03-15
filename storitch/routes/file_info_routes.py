@@ -29,23 +29,23 @@ DESCRIPTION = """
 async def get_file_info_route(
     file_id: str,
     filename: str | None = None,
-):
+) -> FileInfo:
     try:
         return await get_file_info(
             file_path=store_file.get_file_path(file_id=file_id), filename=filename or ''
         )
-    except FileNotFoundError:
-        raise HTTPException(status_code=404, detail='Not found')
-    except OSError:
-        raise HTTPException(status_code=500, detail='Failed to open file')
-    except ValueError:
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail='Not found') from e
+    except OSError as e:
+        raise HTTPException(status_code=500, detail='Failed to open file') from e
+    except ValueError as e:
         raise HTTPException(
             status_code=400, detail='Invalid DICOM file, does not look like an image'
-        )
-    except InvalidDicomError:
+        ) from e
+    except InvalidDicomError as e:
         raise HTTPException(
             status_code=400, detail='Invalid DICOM file, could not read file'
-        )
+        ) from e
     except Exception as e:
         logging.exception(e)
-        raise HTTPException(status_code=500, detail='Internal server error')
+        raise HTTPException(status_code=500, detail='Internal server error') from e

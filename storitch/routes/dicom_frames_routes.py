@@ -19,7 +19,7 @@ router = APIRouter(tags=['DICOM'])
     '/{file_id}/dicom/frames/{frames}',
     responses={200: {'content': {'multipart/related': {}}}},
 )
-async def get_dicom_frames(
+async def get_dicom_frames_route(
     file_id: str,
     frames: Annotated[
         str,
@@ -28,7 +28,7 @@ async def get_dicom_frames(
             examples=['1', '1,2'],
         ),
     ],
-):
+) -> Response:
     frame_numbers = [int(f) for f in frames.split(',')]
     try:
         boundary = str(uuid4())
@@ -38,26 +38,26 @@ async def get_dicom_frames(
                 'Content-Type': f'multipart/related; boundary={boundary}',
             },
         )
-    except FileNotFoundError:
-        raise HTTPException(status_code=404, detail='Not found')
-    except OSError:
-        raise HTTPException(status_code=500, detail='Failed to open file')
-    except ValueError:
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail='Not found') from e
+    except OSError as e:
+        raise HTTPException(status_code=500, detail='Failed to open file') from e
+    except ValueError as e:
         raise HTTPException(
             status_code=400, detail='Invalid DICOM file, does not look like an image'
-        )
-    except InvalidDicomError:
+        ) from e
+    except InvalidDicomError as e:
         raise HTTPException(
             status_code=400, detail='Invalid DICOM file, could not read file'
-        )
+        ) from e
     except HTTPException:
         raise
     except Exception as e:
         logging.exception(e)
-        raise HTTPException(status_code=500, detail='Internal server error')
+        raise HTTPException(status_code=500, detail='Internal server error') from e
 
 
-def get_frames(path: Path, frames: list[int], boundary: str):
+def get_frames(path: Path, frames: list[int], boundary: str) -> bytes:
     if path not in _cached:
         _cached[path] = ImageFileReader(path)
         _cached[path].open()
@@ -92,7 +92,7 @@ _cached: dict[Path, ImageFileReader] = {}
 _cached_close_callback: dict[Path, TimerHandle] = {}
 
 
-def _close_image(path: Path):
+def _close_image(path: Path) -> None:
     if path in _cached:
         _cached[path].close()
         del _cached[path]

@@ -18,15 +18,15 @@ router = APIRouter(tags=['Session Upload'])
 
 @router.post(
     '/store/session',
-    responses={201: {'model': schemas.UploadResult | schemas.SessionResult}},
     status_code=201,
     description="""
 For chunked uploads, `X-Finished` should be false for all but the last chunk.
 
-The response will contain a Session ID that should be used for subsequent chunks or the `file_id` if `X-Finished` is true.
+The response will contain a Session ID that should be used for subsequent 
+chunks or the `file_id` if `X-Finished` is true.
 """,
 )
-async def session_upload_start(
+async def session_upload_start_route(
     content_type: Annotated[Literal['application/octet-stream'], Header()],
     request: Request,
     api_key: Annotated[str, Security(validate_api_key)],
@@ -36,15 +36,15 @@ async def session_upload_start(
     | None = None,
     x_filename: Annotated[str, Header(description='Filename (unicode escaped)')] = '',
     x_finished: Annotated[bool, Header(description='Finished uploading')] = True,
-):
+) -> schemas.UploadResult | schemas.SessionResult:
     x_filename = x_filename.encode().decode('unicode-escape')
     if x_storitch:
         try:
             info = schemas.SessionUploadStart.model_validate(json.loads(x_storitch))
-        except json.decoder.JSONDecodeError:
+        except json.decoder.JSONDecodeError as e:
             raise HTTPException(
                 status_code=400, detail='Invalid JSON in X-Storitch header'
-            )
+            ) from e
     else:
         try:
             info = schemas.SessionUploadStart(
@@ -52,7 +52,7 @@ async def session_upload_start(
                 finished=x_finished,
             )
         except ValidationError as e:
-            raise RequestValidationError(e.errors())
+            raise RequestValidationError(e.errors()) from e
 
     session = str(uuid.uuid4())
     return await save(request, session, info.filename, info.finished, True)
@@ -68,7 +68,7 @@ async def session_upload_start(
 When finished, the response will contain the file_id of the file.
 """,
 )
-async def session_upload_append(
+async def session_upload_append_route(
     content_type: Annotated[Literal['application/octet-stream'], Header()],
     request: Request,
     api_key: Annotated[str, Security(validate_api_key)],
@@ -76,15 +76,15 @@ async def session_upload_append(
     x_filename: Annotated[str, Header(description='Filename (unicode escaped)')] = '',
     x_session: Annotated[str, Header(description='Upload Session ID')] = '',
     x_finished: Annotated[bool, Header(description='Finished uploading')] = True,
-):
+) -> schemas.UploadResult | schemas.SessionResult:
     x_filename = x_filename.encode().decode('unicode-escape')
     if x_storitch:
         try:
             info = schemas.SessionUploadAppend.model_validate(json.loads(x_storitch))
-        except json.decoder.JSONDecodeError:
+        except json.decoder.JSONDecodeError as e:
             raise HTTPException(
                 status_code=400, detail='Invalid JSON in X-Storitch header'
-            )
+            ) from e
     else:
         try:
             info = schemas.SessionUploadAppend(
@@ -93,14 +93,14 @@ async def session_upload_append(
                 finished=x_finished,
             )
         except ValidationError as e:
-            raise RequestValidationError(e.errors())
+            raise RequestValidationError(e.errors()) from e
 
     return await save(request, info.session, info.filename, info.finished, False)
 
 
 async def save(
     request: Request, session: str, filename: str, finished: bool, new: bool
-):
+) -> schemas.UploadResult | schemas.SessionResult:
     temp_path = Path(config.temp_path) / session
     if not new and not temp_path.exists():
         raise HTTPException(status_code=400, detail='Upload session not found')

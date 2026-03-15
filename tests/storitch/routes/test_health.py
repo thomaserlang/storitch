@@ -10,7 +10,7 @@ from storitch.main import app
 client = TestClient(app)
 
 
-def test_health():
+def test_health() -> None:
     with tempfile.TemporaryDirectory() as temp_dir:
         config.store_path = Path(temp_dir)
         response = client.get('/health')

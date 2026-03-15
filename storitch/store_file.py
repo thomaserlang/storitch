@@ -1,5 +1,6 @@
 import hashlib
 import uuid
+from pathlib import Path
 
 from aiofile import async_open
 from fastapi import UploadFile
@@ -12,7 +13,7 @@ from . import config, schemas, utils
 async def move_to_permanent_store(
     file_: UploadFile,
     filename: str,
-):
+) -> schemas.UploadResult:
     file_id = str(uuid.uuid4())
     path = (await create_store_folder(file_id)) / file_id
     if path.exists():
@@ -28,7 +29,9 @@ async def move_to_permanent_store(
     return await upload_result(file_id, hash_, filename)
 
 
-async def upload_result(file_id: str, hash_: str, filename: str):
+async def upload_result(
+    file_id: str, hash_: str, filename: str
+) -> schemas.UploadResult:
     path = get_file_path(file_id)
     file_info = await get_file_info(path, filename)
     return schemas.UploadResult(
@@ -44,16 +47,16 @@ async def upload_result(file_id: str, hash_: str, filename: str):
     )
 
 
-async def create_store_folder(file_id: str):
+async def create_store_folder(file_id: str) -> Path:
     dir = get_store_folder(file_id)
     if not dir.exists():
         dir.mkdir(parents=True, mode=int(config.dir_mode, 8))
     return dir
 
 
-def get_store_folder(file_id: str):
+def get_store_folder(file_id: str) -> Path:
     return config.store_path / utils.path_from_file_id(file_id)
 
 
-def get_file_path(file_id: str):
+def get_file_path(file_id: str) -> Path:
     return get_store_folder(file_id) / file_id

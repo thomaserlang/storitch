@@ -12,7 +12,7 @@ from storitch.main import app
 client = TestClient(app)
 
 
-def test_thumbnail():
+def test_thumbnail() -> None:
     with tempfile.TemporaryDirectory() as temp_dir:
         config.store_path = Path(temp_dir)
         config.api_keys = ['test']
@@ -33,6 +33,7 @@ def test_thumbnail():
 
         with Image.open(io.BytesIO(response.content)) as image:
             assert image.format == 'JPEG', image.format
+            assert image.width == 2, image.width
 
         response = client.get(
             f'/{data[0]["file_id"]}@SX2.webp',
@@ -48,7 +49,7 @@ def test_thumbnail():
         assert response.status_code == 400, response.text
 
 
-def test_dcm_thumbnail():
+def test_dcm_thumbnail() -> None:
     with tempfile.TemporaryDirectory() as temp_dir:
         config.store_path = Path(temp_dir)
         config.api_keys = ['test']

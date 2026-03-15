@@ -10,7 +10,7 @@ from storitch.main import app
 client = TestClient(app)
 
 
-def test_dicom_frames():
+def test_dicom_frames() -> None:
     with tempfile.TemporaryDirectory() as temp_dir:
         config.store_path = Path(temp_dir)
         config.api_keys = ['test']
