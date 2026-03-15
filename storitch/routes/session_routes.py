@@ -109,8 +109,11 @@ async def save(
             await f.write(chunk)
     if finished:
         hash_ = await run_in_threadpool(utils.file_sha256, temp_path)
-        file_id = str(uuid.uuid4())
+        file_id = hash_ if config.deduplication else str(uuid.uuid4())
         path = await create_store_folder(file_id) / file_id
+        if config.deduplication and path.exists():
+            temp_path.unlink()
+            return await upload_result(file_id, hash_, filename)
         await run_in_threadpool(temp_path.rename, path)
         path.chmod(int(config.file_mode, 8))
         return await upload_result(file_id, hash_, filename)

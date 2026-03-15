@@ -73,6 +73,7 @@ class ConfigSettings(BaseSettings):
     content_disposition_type: str = 'inline'
     extract_metadata: bool = True
     sentry_dsn: str | None = None
+    deduplication: bool = True
 
 
 config = ConfigSettings()

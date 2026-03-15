@@ -25,6 +25,12 @@ async def move_to_permanent_store(
             await f.write(chunk)
             digest.update(chunk)
     hash_ = digest.hexdigest()
+    if config.deduplication:
+        cfile = get_file_path(hash_)
+        if cfile.exists():
+            await f.close()
+            path.unlink()
+            return await upload_result(file_id, hash_, filename)
     path.chmod(int(config.file_mode, 8))
     return await upload_result(file_id, hash_, filename)
 
