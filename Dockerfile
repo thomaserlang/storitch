@@ -1,30 +1,34 @@
-FROM ghcr.io/astral-sh/uv:python3.13-bookworm AS pybuilder
-ENV UV_PYTHON_DOWNLOADS=0
+FROM ghcr.io/astral-sh/uv:python3.13-trixie AS pybuilder
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
+
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --frozen --no-install-project --no-dev
-ADD . /app
+    uv sync --frozen --no-install-workspace
+
+COPY . /app
+
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev
+    uv sync --locked
 
-FROM dpokidov/imagemagick:7.1.1-47-bookworm AS imagemagick
 
-FROM python:3.13-slim-bookworm
+FROM python:3.13-slim-trixie
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y wget
 
-
 # ImageMagick (https://github.com/dooman87/imagemagick-docker) 
-ARG IM_VERSION=7.1.2-3
+ARG IM_VERSION=7.1.2-12
 ARG LIB_HEIF_VERSION=1.21.2
 ARG LIB_AOM_VERSION=3.13.1
 ARG LIB_WEBP_VERSION=1.6.0
 ARG LIBJXL_VERSION=0.11.1
 
-RUN apt-get install -y --no-install-recommends git make pkg-config autoconf curl cmake clang libomp-dev ca-certificates automake \
+RUN apt-get -y update && \
+    apt-get -y upgrade && \
+    apt-get install -y --no-install-recommends git make pkg-config autoconf curl cmake clang libomp-dev ca-certificates automake \
     # libaom
     yasm \
     # libheif
@@ -38,23 +42,23 @@ RUN apt-get install -y --no-install-recommends git make pkg-config autoconf curl
     # Install manually to prevent deleting with -dev packages
     libxext6 libbrotli1 && \
     export CC=clang CXX=clang++ && \
+    # Building libjxl
+    git clone -b v${LIBJXL_VERSION} https://github.com/libjxl/libjxl.git --depth 1 --recursive --shallow-submodules && \
+    cd libjxl && \
+    mkdir build && \
+    cd build && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. && \
+    cmake --build . -- -j$(nproc) && \
+    cmake --install . && \
+    cd ../../ && \
+    rm -rf libjxl && \
+    ldconfig /usr/local/lib && \
     # Building libwebp
     git clone -b v${LIB_WEBP_VERSION} --depth 1 https://chromium.googlesource.com/webm/libwebp && \
     cd libwebp && \
     mkdir build && cd build && cmake -DBUILD_SHARED_LIBS=ON ../ && make && make install && \
     ldconfig /usr/local/lib && \
     cd ../../ && rm -rf libwebp && \
-    # Building libjxl
-    git clone -b v${LIBJXL_VERSION} https://github.com/libjxl/libjxl.git --depth 1 --recursive --shallow-submodules && \
-    cd libjxl && \
-    mkdir build && \
-    cd build && \
-    cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DJPEGXL_FORCE_SYSTEM_BROTLI=ON -DJPEGXL_FORCE_SYSTEM_LCMS2=ON .. && \
-    cmake --build . -- -j$(nproc) && \
-    cmake --install . && \
-    cd ../../ && \
-    rm -rf libjxl && \
-    ldconfig /usr/local/lib && \
     # Building libaom
     git clone -b v${LIB_AOM_VERSION} --depth 1 https://aomedia.googlesource.com/aom && \
     mkdir build_aom && \
@@ -66,20 +70,18 @@ RUN apt-get install -y --no-install-recommends git make pkg-config autoconf curl
     rm -rf build_aom && \
     # Building libheif
     git clone -b v${LIB_HEIF_VERSION} --depth 1 https://github.com/strukturag/libheif.git && \
-    cd libheif/ && \
-    mkdir build && cd build && cmake --preset=release .. && make && make install && cd ../../ && \
+    cd libheif/ && mkdir build && cd build && cmake --preset=release .. && make && make install && cd ../../ && \
     ldconfig /usr/local/lib && \
     rm -rf libheif && \
     # Building ImageMagick
     git clone -b ${IM_VERSION} --depth 1 https://github.com/ImageMagick/ImageMagick.git && \
     cd ImageMagick && \
-    LIBS="-lsharpyuv" ./configure --without-magick-plus-plus --disable-docs --disable-static --with-tiff --with-jxl --with-tcmalloc && \
+    ./configure --without-magick-plus-plus --disable-docs --disable-static --with-tiff --with-jxl --with-tcmalloc && \
     make && make install && \
     ldconfig /usr/local/lib && \
-    apt-get remove --autoremove --purge -y make cmake clang clang-14 curl yasm git autoconf automake pkg-config libpng-dev libjpeg62-turbo-dev libde265-dev libx265-dev libxml2-dev libtiff-dev libfontconfig1-dev libfreetype6-dev liblcms2-dev libsdl1.2-dev libgif-dev libbrotli-dev && \
+    apt-get remove --autoremove --purge -y make cmake clang clang-19 curl yasm git autoconf automake pkg-config libpng-dev libjpeg62-turbo-dev libde265-dev libx265-dev libxml2-dev libtiff-dev libfontconfig1-dev libfreetype6-dev liblcms2-dev libsdl1.2-dev libgif-dev libbrotli-dev && \
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /ImageMagick
-
 
 
 COPY --from=pybuilder --chown=app:app /app /app
