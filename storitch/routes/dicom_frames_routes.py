@@ -1,11 +1,12 @@
 import logging
-from io import BytesIO
+from collections.abc import Generator
 from pathlib import Path
 from typing import Annotated
 
-import highdicom as hd
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, HTTPException
 from fastapi import Path as PathParam
+from fastapi.responses import StreamingResponse
+from highdicom.io import ImageFileReader
 from pydicom.errors import InvalidDicomError
 
 from storitch.store_file import get_file_path
@@ -26,7 +27,7 @@ async def get_dicom_frames_route(
             examples=['1', '1,2'],
         ),
     ],
-) -> Response:
+) -> StreamingResponse:
     frame_numbers = [int(f) for f in frames.split(',')]
     try:
         return get_frames(get_file_path(file_id), frame_numbers)
@@ -63,35 +64,35 @@ _TS_TO_CT = {
     '1.2.840.10008.1.2.5': 'application/octet-stream',  # RLE Lossless
 }
 
-
-def get_frames(path: Path, frame_numbers: list[int]) -> Response:
-    im = hd.imread(path, lazy_frame_retrieval=True)
-    ts = (
-        str(im.file_meta.TransferSyntaxUID)
-        if hasattr(im, 'file_meta')
-        else '1.2.840.10008.1.2.1'
-    )
-    frame_ct = _TS_TO_CT.get(ts, 'application/octet-stream')
-
-    frames_bytes = []
-    for fn in frame_numbers:
-        frames_bytes.append(im.get_raw_frame(fn))
-
-    parts = [(fb, frame_ct, ts) for fb in frames_bytes]
-    multipart_ct = f'multipart/related; type="{frame_ct}"; boundary={_BOUNDARY}'
-    return Response(content=_multipart(parts), media_type=multipart_ct)
-
-
-def _multipart(parts: list[tuple[bytes, str, str]]) -> bytes:
-    buf = BytesIO()
-    for data, ct, ts in parts:
-        buf.write(f'--{_BOUNDARY}\r\n'.encode())
-        # transfer-syntax must be a Content-Type parameter, not a separate header
-        buf.write(f'Content-Type: {ct}; transfer-syntax={ts}\r\n\r\n'.encode())
-        buf.write(data)
-        buf.write(b'\r\n')
-    buf.write(f'--{_BOUNDARY}--\r\n'.encode())
-    return buf.getvalue()
-
-
 _BOUNDARY = 'DICOMwebBoundary'
+
+
+def get_frames(path: Path, frame_numbers: list[int]) -> StreamingResponse:
+    reader = ImageFileReader(path)
+    reader.__enter__()
+    ts = str(reader.transfer_syntax_uid)
+    frame_ct = _TS_TO_CT.get(ts, 'application/octet-stream')
+    multipart_ct = f'multipart/related; type="{frame_ct}"; boundary={_BOUNDARY}'
+
+    return StreamingResponse(
+        _multipart_stream(reader, frame_numbers, frame_ct, ts),
+        media_type=multipart_ct,
+    )
+
+
+def _multipart_stream(
+    reader: ImageFileReader,
+    frame_numbers: list[int],
+    ct: str,
+    ts: str,
+) -> Generator[bytes]:
+    header = f'Content-Type: {ct}; transfer-syntax={ts}\r\n\r\n'
+    try:
+        for fn in frame_numbers:
+            yield f'--{_BOUNDARY}\r\n'.encode()
+            yield header.encode()
+            yield reader.read_frame_raw(fn - 1)
+            yield b'\r\n'
+        yield f'--{_BOUNDARY}--\r\n'.encode()
+    finally:
+        reader.close()
