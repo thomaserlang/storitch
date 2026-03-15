@@ -112,6 +112,8 @@ Or
 
 ## Development install
 
-    python3 -m venv .venv
-    source .venv/bin/activate
-    python -m pip install -e .
+    uv sync --dev
+
+## Release
+
+  git tag v<date> && git push --tags
