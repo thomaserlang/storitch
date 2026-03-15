@@ -1,0 +1,4 @@
+debug: true
+api_keys: ["test-key"]
+port: 3001
+temp_path: /var/storitch/tmp

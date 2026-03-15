@@ -31,7 +31,7 @@ def test_dicom_frames() -> None:
         )
         assert response.status_code == 200, response.text
         assert response.headers['Content-Type'].startswith(
-            'multipart/related; boundary='
+            'multipart/related; type="image/jpeg"; boundary=DICOMwebBoundary'
         )
 
         response = client.get(
@@ -39,7 +39,7 @@ def test_dicom_frames() -> None:
         )
         assert response.status_code == 200, response.text
         assert response.headers['Content-Type'].startswith(
-            'multipart/related; boundary='
+            'multipart/related; type="image/jpeg"; boundary=DICOMwebBoundary'
         )
 
         response = client.get(

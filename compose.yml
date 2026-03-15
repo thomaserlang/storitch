@@ -1,9 +1,8 @@
-version: '3'
 services:
   storitch:
     build: .
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       - storitch__api_keys=["test"]
       - storitch__debug=true
