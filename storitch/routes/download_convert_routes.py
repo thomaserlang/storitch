@@ -18,6 +18,8 @@ from pydantic import StringConstraints
 from storitch import config, store_file
 from storitch.ignore_errors import ignore_error
 
+pyvips.cache_set_max(0)
+
 router = APIRouter(tags=['Download'])
 
 
