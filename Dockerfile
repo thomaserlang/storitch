@@ -14,6 +14,25 @@ COPY . /app
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked
 
+ENV JEMALLOC_VERSION=5.3.0
+
+RUN apt-get update && \
+    apt-get install -yq wget pwgen gcc make bzip2 && \
+    rm -rf /var/lib/apt/lists/* && \
+    wget -q https://github.com/jemalloc/jemalloc/releases/download/$JEMALLOC_VERSION/jemalloc-$JEMALLOC_VERSION.tar.bz2 && \
+    tar jxf jemalloc-*.tar.bz2 && \
+    rm jemalloc-*.tar.bz2 && \
+    cd jemalloc-* && \
+    ./configure --enable-prof --enable-stats --enable-debug --enable-fill && \
+    make && \
+    make install && \
+    cd - && \
+    rm -rf jemalloc-* && \
+    apt-get remove -yq wget pwgen gcc make bzip2 && \
+    rm -rf /usr/share/doc /usr/share/man && \
+    apt-get clean autoclean && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/{apt,dpkg,cache,log}/
 
 FROM python:3.13-slim-trixie
 
@@ -81,6 +100,10 @@ RUN apt-get -y update && \
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /ImageMagick
 
+
+COPY --from=pybuilder /usr/local/lib/libjemalloc.so /usr/local/lib/libjemalloc.so
+ENV LD_PRELOAD="/usr/local/lib/libjemalloc.so"
+ENV MALLOC_CONF="background_thread:true,dirty_decay_ms:1000,muzzy_decay_ms:1000"
 
 COPY --from=pybuilder --chown=app:app /app /app
 
