@@ -103,8 +103,8 @@ RUN apt-get -y update && \
 
 COPY --from=pybuilder /usr/local/lib/libjemalloc.so /usr/local/lib/libjemalloc.so
 ENV LD_PRELOAD="/usr/local/lib/libjemalloc.so"
-ENV MALLOC_CONF="background_thread:true,dirty_decay_ms:1000,muzzy_decay_ms:1000"
-ENV MALLOC_ARENA_MAX="2"
+ENV MALLOC_CONF="background_thread:true,dirty_decay_ms:5000,muzzy_decay_ms:5000,narenas:2,tcache_max:8192"
+
 
 COPY --from=pybuilder --chown=app:app /app /app
 
