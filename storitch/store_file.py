@@ -4,6 +4,7 @@ from pathlib import Path
 
 from aiofile import async_open
 from fastapi import UploadFile
+from fastapi.concurrency import run_in_threadpool
 
 from storitch.identify_file import get_file_info
 
@@ -24,19 +25,24 @@ async def move_to_permanent_store(
         while chunk := await file_.read(128 * 1024):
             await f.write(chunk)
             digest.update(chunk)
+
     hash_ = digest.hexdigest()
+    path.chmod(int(config.file_mode, 8))
+
     if config.deduplication:
         cfile = get_file_path(hash_)
         if cfile.exists():
-            await f.close()
             path.unlink()
-            return await upload_result(file_id, hash_, filename)
-    path.chmod(int(config.file_mode, 8))
-    return await upload_result(file_id, hash_, filename)
+        else:
+            await create_store_folder(hash_)
+            await run_in_threadpool(path.rename, cfile)
+        return await upload_result(file_id=hash_, hash_=hash_, filename=filename)
+
+    return await upload_result(file_id=file_id, hash_=hash_, filename=filename)
 
 
 async def upload_result(
-    file_id: str, hash_: str, filename: str
+    *, file_id: str, hash_: str, filename: str
 ) -> schemas.UploadResult:
     path = get_file_path(file_id)
     file_info = await get_file_info(path, filename)

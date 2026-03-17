@@ -113,8 +113,9 @@ async def save(
         path = await create_store_folder(file_id) / file_id
         if config.deduplication and path.exists():
             temp_path.unlink()
-            return await upload_result(file_id, hash_, filename)
+            return await upload_result(file_id=file_id, hash_=hash_, filename=filename)
         await run_in_threadpool(temp_path.rename, path)
         path.chmod(int(config.file_mode, 8))
-        return await upload_result(file_id, hash_, filename)
+        return await upload_result(file_id=file_id, hash_=hash_, filename=filename)
+
     return schemas.SessionResult(session=session)
