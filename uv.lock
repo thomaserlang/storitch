@@ -655,23 +655,23 @@ binary = [
 
 [[package]]
 name = "pyvips-binary"
-version = "8.18.0"
+version = "8.18.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cffi" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/da/94/65b69d93df3bef0b45f4ca83b7a231df3caeab110844ab7d0960158ac5bd/pyvips_binary-8.18.0.tar.gz", hash = "sha256:2f9e509de6d0cf04ea9b429ff0649130a9cf04de8a4f0887d2bcb72e3973225a", size = 3725, upload-time = "2026-01-01T11:16:57.306Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a5/4e/146e6f1e61a6e00d88698dc40d1f85a04633a470fb451a5dba7e5eab1734/pyvips_binary-8.18.1.tar.gz", hash = "sha256:61e41738e95629f10ab1408c9d9ea22edd9de8b5eedacaec60e2ef41430973ae", size = 3808, upload-time = "2026-03-20T12:12:43.91Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b7/d9/18563c9cccf5852d458e692ca15d87df08f0f06ce327a2388d01ef606009/pyvips_binary-8.18.0-cp37-abi3-macosx_10_15_x86_64.whl", hash = "sha256:6ff72bd6c60bb6cf75b7827083b64e275a15a7d862628b5716998350c17426c8", size = 8383964, upload-time = "2026-01-01T11:16:37.016Z" },
-    { url = "https://files.pythonhosted.org/packages/35/96/3c642e25921217c51caff7c1cffcf26bc7f3a6c64f983f2949d8732bffc4/pyvips_binary-8.18.0-cp37-abi3-macosx_11_0_arm64.whl", hash = "sha256:a570dbf76bb620efc9745d82d6493da504d56b21b035ccd876e358a0c182e018", size = 7500206, upload-time = "2026-01-01T11:16:39.577Z" },
-    { url = "https://files.pythonhosted.org/packages/37/5d/01d77f7620b24dace147d11d7ee68a466c29f4463b2d7123376fd89d8a7a/pyvips_binary-8.18.0-cp37-abi3-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:dad3012233b7b12f48180f2a407a50854e44654f37168fa8d42583d9e4f15882", size = 7645104, upload-time = "2026-01-01T11:16:41.491Z" },
-    { url = "https://files.pythonhosted.org/packages/3b/a7/8d8acdae7c507734d9d34c6076700606fec7557fb943cc125fcdfd451678/pyvips_binary-8.18.0-cp37-abi3-manylinux_2_26_armv7l.manylinux_2_31_armv7l.whl", hash = "sha256:0906be336b8f775e2d33dfe61ffc480ff83c91c08d5eeff904c27c2c5164ff3a", size = 7400818, upload-time = "2026-01-01T11:16:43.595Z" },
-    { url = "https://files.pythonhosted.org/packages/bf/e9/065cdee9c5e004a3fc593e61b7ae56ca1675fd55f7714945f73546beedda/pyvips_binary-8.18.0-cp37-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:d4ddd4d344f758483d1630a9a08f201ab95162599acc6a8e6c62bb1563e94fe0", size = 7556718, upload-time = "2026-01-01T11:16:45.287Z" },
-    { url = "https://files.pythonhosted.org/packages/05/35/3529e40931a92b879b7fa23e8228627dea0a56b0ddd0bd667d49e361ef89/pyvips_binary-8.18.0-cp37-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:076fb0affa2901af0fee90c728ded6eed2c72f00356af9895fa7a1fb6c9a2288", size = 7806440, upload-time = "2026-01-01T11:16:47.331Z" },
-    { url = "https://files.pythonhosted.org/packages/21/a7/4588ab9bda60b0ed0d5b2be6caf9bd5f19216328b96825a4cd32ded9a1ff/pyvips_binary-8.18.0-cp37-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:659ef1e4af04b3472e7762a95caa1038fdeea530807c84a23a0f4c706af0338f", size = 7683956, upload-time = "2026-01-01T11:16:49.163Z" },
-    { url = "https://files.pythonhosted.org/packages/4c/6f/8ee7e74a878941c661d25b6518a8a9bf7a2b12c20b28040c0d047798aa21/pyvips_binary-8.18.0-cp37-abi3-win32.whl", hash = "sha256:fd331bcd75bff8651d73d09687d55ac8fb9014baa5682b770a4ea0fbcedf5f97", size = 8323911, upload-time = "2026-01-01T11:16:51.351Z" },
-    { url = "https://files.pythonhosted.org/packages/38/55/12550311fea85253acbb89808bed4b5f516f8e8245333ee3713d9d55ee52/pyvips_binary-8.18.0-cp37-abi3-win_amd64.whl", hash = "sha256:a67d73683f70c21bf2c336b6d5ddc2bd54ec36db72cc54ab63cb48bc2373feac", size = 8288206, upload-time = "2026-01-01T11:16:53.553Z" },
-    { url = "https://files.pythonhosted.org/packages/fa/88/a80cba68aef1faea4137d004548003074bc6468b07d5c8a974b6a64b8a8f/pyvips_binary-8.18.0-cp37-abi3-win_arm64.whl", hash = "sha256:0c1f9af910866bc8c2d55182e7a6e8684a828ee4d6084dd814e88e2ee9ec4be3", size = 7492382, upload-time = "2026-01-01T11:16:55.508Z" },
+    { url = "https://files.pythonhosted.org/packages/de/fd/ac1698bebcfc7ea1d38a8fa8fc7f7dc88b0e365d0b370e21ca9429b1ce98/pyvips_binary-8.18.1-cp37-abi3-macosx_10_15_x86_64.whl", hash = "sha256:b96a0ef1340d6133e8e38d9381137861d706c696d0d82f2010039b20f6fcc825", size = 8399481, upload-time = "2026-03-20T12:12:24.592Z" },
+    { url = "https://files.pythonhosted.org/packages/eb/6a/6ed36423031b39c4a29312d9422f4968a55a1ce60607a84bf12aaf973dd3/pyvips_binary-8.18.1-cp37-abi3-macosx_11_0_arm64.whl", hash = "sha256:3fb9da863e169550a66efe552a741328f3b13ec4dbe96c518ed8ee60c7ef7313", size = 7560954, upload-time = "2026-03-20T12:12:26.988Z" },
+    { url = "https://files.pythonhosted.org/packages/24/7b/9fd56b14cf63e70b91d433c61ec37405a782d8d51ac56afe6480c3d5cf91/pyvips_binary-8.18.1-cp37-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:77491a0c8d48e98f94284856a12e205a8ac182586a346be7d944bab541395f5e", size = 7809204, upload-time = "2026-03-20T12:12:28.62Z" },
+    { url = "https://files.pythonhosted.org/packages/4d/83/110e628807b3b71f65c1cade4c6b959b171840a046c538df262044775f37/pyvips_binary-8.18.1-cp37-abi3-manylinux_2_28_armv7l.manylinux_2_31_armv7l.whl", hash = "sha256:c2105fd5677f56ed18524ab898397aea6dd39e55652cf4299c592a77104352ba", size = 7529581, upload-time = "2026-03-20T12:12:30.506Z" },
+    { url = "https://files.pythonhosted.org/packages/b3/02/04843f8afb6f25f214a2962cb707888326e845c58d45bed5211dd16623c8/pyvips_binary-8.18.1-cp37-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:d8ef3154a8288ffebff7a8918154c8b1b128856c53d43b7b9a5dacc47ffd0a82", size = 7751300, upload-time = "2026-03-20T12:12:32.445Z" },
+    { url = "https://files.pythonhosted.org/packages/f5/ab/360d6c0b85e2494562d7180d494c566d2df260b033693ae2b9a180790b23/pyvips_binary-8.18.1-cp37-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:b0e67f90d2054259d81516e322fd8d7abb42c44888026a4056e1e080e91ef2f5", size = 7861944, upload-time = "2026-03-20T12:12:34.775Z" },
+    { url = "https://files.pythonhosted.org/packages/37/c0/d6f1a5459c88d87931a623484dbf8deace51ead862e84c6e9590433b4922/pyvips_binary-8.18.1-cp37-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:105e28a5545d755dcf6dacf345c1379a81481314a8176d401ce657af7ec22779", size = 7773899, upload-time = "2026-03-20T12:12:36.81Z" },
+    { url = "https://files.pythonhosted.org/packages/a2/d5/ef25863389d51fc8d9ab59147a2c6398678eeb2ff5ed4872d112958f3242/pyvips_binary-8.18.1-cp37-abi3-win32.whl", hash = "sha256:d74e9e6a02bf70cf9c6c27031557d3f9b3d1f4f790f268d12a9e0de5f2b3acff", size = 8392437, upload-time = "2026-03-20T12:12:38.371Z" },
+    { url = "https://files.pythonhosted.org/packages/5a/74/be2084ec74dcf0fa7d372206e0c9b3fb90d66c587a8750cf0e95dbff2ec6/pyvips_binary-8.18.1-cp37-abi3-win_amd64.whl", hash = "sha256:c3223c27ab4b4fe246068667b5311e2199ab725cf31f3c5cbbbeb263f99533f5", size = 8339205, upload-time = "2026-03-20T12:12:40.589Z" },
+    { url = "https://files.pythonhosted.org/packages/a8/2e/803aae0fb020096c633906916e2e06087147a9753655fde579eac2e9c74e/pyvips_binary-8.18.1-cp37-abi3-win_arm64.whl", hash = "sha256:bbb12996c4f86ef441ded65cd1cf44f90818e615744297005df3355a23f76c31", size = 7532524, upload-time = "2026-03-20T12:12:42.254Z" },
 ]
 
 [[package]]
@@ -727,15 +727,15 @@ wheels = [
 
 [[package]]
 name = "sentry-sdk"
-version = "2.54.0"
+version = "2.55.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c8/e9/2e3a46c304e7fa21eaa70612f60354e32699c7102eb961f67448e222ad7c/sentry_sdk-2.54.0.tar.gz", hash = "sha256:2620c2575128d009b11b20f7feb81e4e4e8ae08ec1d36cbc845705060b45cc1b", size = 413813, upload-time = "2026-03-02T15:12:41.355Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e9/b8/285293dc60fc198fffc3fcdbc7c6d4e646e0f74e61461c355d40faa64ceb/sentry_sdk-2.55.0.tar.gz", hash = "sha256:3774c4d8820720ca4101548131b9c162f4c9426eb7f4d24aca453012a7470f69", size = 424505, upload-time = "2026-03-17T14:15:51.707Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/53/39/be412cc86bc6247b8f69e9383d7950711bd86f8d0a4a4b0fe8fad685bc21/sentry_sdk-2.54.0-py2.py3-none-any.whl", hash = "sha256:fd74e0e281dcda63afff095d23ebcd6e97006102cdc8e78a29f19ecdf796a0de", size = 439198, upload-time = "2026-03-02T15:12:39.546Z" },
+    { url = "https://files.pythonhosted.org/packages/9a/66/20465097782d7e1e742d846407ea7262d338c6e876ddddad38ca8907b38f/sentry_sdk-2.55.0-py2.py3-none-any.whl", hash = "sha256:97026981cb15699394474a196b88503a393cbc58d182ece0d3abe12b9bd978d4", size = 449284, upload-time = "2026-03-17T14:15:49.604Z" },
 ]
 
 [[package]]
@@ -833,13 +833,13 @@ wheels = [
 
 [[package]]
 name = "uvicorn"
-version = "0.41.0"
+version = "0.42.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
     { name = "h11" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/32/ce/eeb58ae4ac36fe09e3842eb02e0eb676bf2c53ae062b98f1b2531673efdd/uvicorn-0.41.0.tar.gz", hash = "sha256:09d11cf7008da33113824ee5a1c6422d89fbc2ff476540d69a34c87fab8b571a", size = 82633, upload-time = "2026-02-16T23:07:24.1Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e3/ad/4a96c425be6fb67e0621e62d86c402b4a17ab2be7f7c055d9bd2f638b9e2/uvicorn-0.42.0.tar.gz", hash = "sha256:9b1f190ce15a2dd22e7758651d9b6d12df09a13d51ba5bf4fc33c383a48e1775", size = 85393, upload-time = "2026-03-16T06:19:50.077Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/83/e4/d04a086285c20886c0daad0e026f250869201013d18f81d9ff5eada73a88/uvicorn-0.41.0-py3-none-any.whl", hash = "sha256:29e35b1d2c36a04b9e180d4007ede3bcb32a85fbdfd6c6aeb3f26839de088187", size = 68783, upload-time = "2026-02-16T23:07:22.357Z" },
+    { url = "https://files.pythonhosted.org/packages/0a/89/f8827ccff89c1586027a105e5630ff6139a64da2515e24dafe860bd9ae4d/uvicorn-0.42.0-py3-none-any.whl", hash = "sha256:96c30f5c7abe6f74ae8900a70e92b85ad6613b745d4879eb9b16ccad15645359", size = 68830, upload-time = "2026-03-16T06:19:48.325Z" },
 ]
