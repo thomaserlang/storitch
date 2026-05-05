@@ -787,7 +787,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.118.0" },
     { name = "filetype", specifier = ">=1.2.0" },
     { name = "highdicom", extras = ["libjpeg"], specifier = ">=0.26.1" },
-    { name = "pillow", specifier = ">=11.3.0" },
+    { name = "pillow", specifier = ">=12.2.0" },
     { name = "pydantic-settings", specifier = ">=2.11.0" },
     { name = "pydicom", specifier = ">=3.0.1" },
     { name = "python-multipart", specifier = ">=0.0.20" },
