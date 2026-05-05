@@ -1,4 +1,4 @@
-FROM ghcr.io/astral-sh/uv:python3.13-trixie AS pybuilder
+FROM ghcr.io/astral-sh/uv:python3.14-trixie AS pybuilder
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
@@ -7,7 +7,7 @@ WORKDIR /app
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --frozen --no-install-workspace
+    uv sync --frozen --no-install-workspace --no-dev
 
 COPY . /app
 
@@ -34,14 +34,14 @@ RUN apt-get update && \
     apt-get autoremove -y && \
     rm -rf /var/lib/{apt,dpkg,cache,log}/
 
-FROM python:3.13-slim-trixie
+FROM python:3.14-slim-trixie
 
-# ImageMagick (https://github.com/dooman87/imagemagick-docker) 
-ARG IM_VERSION=7.1.2-12
+# ImageMagick (https://github.com/dooman87/imagemagick-docker)
+ARG IM_VERSION=7.1.2-21
 ARG LIB_HEIF_VERSION=1.21.2
 ARG LIB_AOM_VERSION=3.13.1
 ARG LIB_WEBP_VERSION=1.6.0
-ARG LIBJXL_VERSION=0.11.1
+ARG LIBJXL_VERSION=0.11.2
 
 RUN apt-get -y update && \
     apt-get -y upgrade && \
