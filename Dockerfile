@@ -14,7 +14,7 @@ COPY . /app
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked
 
-ENV JEMALLOC_VERSION=5.3.0
+ENV JEMALLOC_VERSION=5.3.1
 
 RUN apt-get update && \
     apt-get install -yq wget pwgen gcc make bzip2 && \
