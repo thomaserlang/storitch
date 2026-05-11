@@ -84,8 +84,8 @@ async def download_route(  # noqa: ANN201
                 status_code=200,
                 media_type=media_type,
                 filename=filename,
-                method='HEAD',
                 stat_result=stat_result,
+                content_disposition_type=config.content_disposition_type,
             )
 
         return range_requests_response(

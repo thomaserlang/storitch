@@ -20,7 +20,13 @@ dependencies = [
 requires-python = ">=3.13"
 
 [dependency-groups]
-dev = ["requests>=2.32.3", "httpx>=0.28.1", "pytest>=8.3.5"]
+dev = [
+    "requests>=2.32.3",
+    "httpx>=0.28.1",
+    "pytest>=8.3.5",
+    "ty>=0.0.35",
+    "ruff>=0.15.12",
+]
 
 [build-system]
 build-backend = "flit_core.buildapi"
