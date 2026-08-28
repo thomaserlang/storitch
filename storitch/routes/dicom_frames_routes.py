@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from collections.abc import Generator
 from pathlib import Path
@@ -5,13 +6,20 @@ from typing import Annotated
 
 from fastapi import APIRouter, HTTPException
 from fastapi import Path as PathParam
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import StreamingResponse
 from highdicom.io import ImageFileReader
 from pydicom.errors import InvalidDicomError
 
+from storitch.dicom_frame_index import (
+    NativeDicomFrameIndex,
+    ensure_dicom_frame_index,
+    read_native_frame,
+)
 from storitch.store_file import get_file_path
 
 router = APIRouter(tags=['DICOM'])
+_FRAME_SETUP_LOCK = asyncio.Lock()
 
 
 @router.get(
@@ -30,7 +38,12 @@ async def get_dicom_frames_route(
 ) -> StreamingResponse:
     frame_numbers = [int(f) for f in frames.split(',')]
     try:
-        return get_frames(get_file_path(file_id), frame_numbers)
+        path = get_file_path(file_id)
+        async with _FRAME_SETUP_LOCK:
+            index = await run_in_threadpool(ensure_dicom_frame_index, path)
+            if isinstance(index, NativeDicomFrameIndex):
+                return get_indexed_frames(path, index, frame_numbers)
+            return await run_in_threadpool(get_frames, path, frame_numbers)
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail='Not found') from e
     except OSError as e:
@@ -67,6 +80,21 @@ _TS_TO_CT = {
 _BOUNDARY = 'DICOMwebBoundary'
 
 
+def get_indexed_frames(
+    path: Path,
+    index: NativeDicomFrameIndex,
+    frame_numbers: list[int],
+) -> StreamingResponse:
+    ts = index.transfer_syntax_uid
+    frame_ct = _TS_TO_CT.get(ts, 'application/octet-stream')
+    multipart_ct = f'multipart/related; type="{frame_ct}"; boundary={_BOUNDARY}'
+
+    return StreamingResponse(
+        _indexed_multipart_stream(path, index, frame_numbers, frame_ct, ts),
+        media_type=multipart_ct,
+    )
+
+
 def get_frames(path: Path, frame_numbers: list[int]) -> StreamingResponse:
     reader = ImageFileReader(path)
     reader.__enter__()
@@ -78,6 +106,22 @@ def get_frames(path: Path, frame_numbers: list[int]) -> StreamingResponse:
         _multipart_stream(reader, frame_numbers, frame_ct, ts),
         media_type=multipart_ct,
     )
+
+
+def _indexed_multipart_stream(
+    path: Path,
+    index: NativeDicomFrameIndex,
+    frame_numbers: list[int],
+    ct: str,
+    ts: str,
+) -> Generator[bytes]:
+    header = f'Content-Type: {ct}; transfer-syntax={ts}\r\n\r\n'
+    for frame_number in frame_numbers:
+        yield f'--{_BOUNDARY}\r\n'.encode()
+        yield header.encode()
+        yield read_native_frame(path, index, frame_number)
+        yield b'\r\n'
+    yield f'--{_BOUNDARY}--\r\n'.encode()
 
 
 def _multipart_stream(

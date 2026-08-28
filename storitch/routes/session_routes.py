@@ -1,4 +1,5 @@
 import json
+import shutil
 import uuid
 from pathlib import Path
 from typing import Annotated, Literal
@@ -114,7 +115,7 @@ async def save(
         if config.deduplication and path.exists():
             temp_path.unlink()
             return await upload_result(file_id=file_id, hash_=hash_, filename=filename)
-        await run_in_threadpool(temp_path.rename, path)
+        await run_in_threadpool(shutil.move, temp_path, path)
         path.chmod(int(config.file_mode, 8))
         return await upload_result(file_id=file_id, hash_=hash_, filename=filename)
 
