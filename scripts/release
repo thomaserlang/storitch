@@ -1,0 +1,435 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#   "textual>=0.89",
+# ]
+# ///
+from __future__ import annotations
+
+import datetime as dt
+import fnmatch
+import subprocess
+from dataclasses import dataclass
+from pathlib import Path
+
+from textual import on
+from textual.app import App, ComposeResult
+from textual.binding import Binding
+from textual.containers import Container, Horizontal, Vertical
+from textual.coordinate import Coordinate
+from textual.screen import ModalScreen
+from textual.widgets import Button, DataTable, Header, Label, Static
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+@dataclass(slots=True)
+class Service:
+    name: str
+    paths: tuple[str, ...]
+
+
+@dataclass(slots=True)
+class ServiceStatus:
+    service: Service
+    latest_tag: str | None
+    changes: list[str]
+    next_tag: str
+
+    @property
+    def suggested(self) -> bool:
+        return bool(self.changes)
+
+
+@dataclass(slots=True)
+class BranchSyncStatus:
+    branch: str
+    upstream: str | None
+    ahead: int
+    behind: int
+
+    @property
+    def needs_push(self) -> bool:
+        return self.ahead > 0
+
+    @property
+    def needs_pull(self) -> bool:
+        return self.behind > 0
+
+
+SERVICES = (
+    Service(
+        name='storitch',
+        paths=(
+            'storitch/**',
+            'conf/**',
+            'pyproject.toml',
+            'uv.lock',
+            'Dockerfile',
+            '.dockerignore',
+            'MANIFEST.in',
+            '.github/workflows/build.yml',
+        ),
+    ),
+)
+
+CSS = """
+Screen {
+    background: #101418;
+}
+
+#layout {
+    height: 100%;
+}
+
+#table {
+    height: auto;
+    max-height: 11;
+    margin: 1 2 0 2;
+}
+
+#release-button {
+    min-width: 12;
+    max-width: 14;
+    margin-right: 2;
+}
+
+#status {
+    height: auto;
+    padding: 0 2;
+    color: #f3d48b;
+}
+
+#actions {
+    height: auto;
+    margin: 1 2 0 2;
+}
+
+#footer {
+    dock: bottom;
+    height: 1;
+    padding: 0 1;
+    background: #2d2d2d;
+    color: #e0e0e0;
+}
+
+ModalScreen {
+    align: center middle;
+}
+
+#dialog {
+    width: 58;
+    height: auto;
+    max-width: 90%;
+    border: round #7aa2f7;
+    background: #171c22;
+    padding: 0 1;
+}
+
+#dialog-title {
+    text-style: bold;
+    margin-bottom: 0;
+}
+
+#dialog-buttons {
+    height: auto;
+    margin-top: 0;
+}
+
+Button {
+    min-width: 10;
+    margin-right: 1;
+}
+"""
+
+
+def run_git(*args: str, check: bool = True) -> str:
+    result = subprocess.run(
+        ('git', *args),
+        cwd=REPO_ROOT,
+        check=check,
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout.strip()
+
+
+def fetch_tags() -> None:
+    run_git('fetch', '--tags', '--quiet', 'origin')
+
+
+def branch_sync_status() -> BranchSyncStatus:
+    branch = run_git('branch', '--show-current') or 'HEAD'
+    upstream = run_git(
+        'rev-parse',
+        '--abbrev-ref',
+        '--symbolic-full-name',
+        '@{upstream}',
+        check=False,
+    )
+    if not upstream:
+        return BranchSyncStatus(branch=branch, upstream=None, ahead=0, behind=0)
+
+    counts = run_git('rev-list', '--left-right', '--count', f'HEAD...{upstream}')
+    ahead_text, behind_text = counts.split()
+    return BranchSyncStatus(
+        branch=branch,
+        upstream=upstream,
+        ahead=int(ahead_text),
+        behind=int(behind_text),
+    )
+
+
+def branch_sync_block_message(status: BranchSyncStatus) -> str | None:
+    if status.branch != 'main':
+        return f'Refusing release: current branch is {status.branch}, expected main.'
+
+    if status.upstream is None:
+        return f'Refusing release: {status.branch} has no upstream branch.'
+
+    missing: list[str] = []
+    if status.needs_pull:
+        missing.append(f'pull {status.behind} commit(s)')
+    if status.needs_push:
+        missing.append(f'push {status.ahead} commit(s)')
+
+    if not missing:
+        return None
+
+    return (
+        f'Refusing release: {status.branch} is out of sync with {status.upstream}; '
+        f'missing {" and ".join(missing)}.'
+    )
+
+
+def latest_release_tag() -> str | None:
+    tags = run_git('tag', '--list', 'v*', '--sort=-version:refname')
+    return tags.splitlines()[0] if tags else None
+
+
+def changed_paths_since(tag: str | None) -> list[str]:
+    if tag is None:
+        return ['no previous release']
+    output = run_git('diff', '--name-only', f'{tag}..HEAD')
+    return output.splitlines()
+
+
+def service_changes(service: Service) -> tuple[str | None, list[str]]:
+    tag = latest_release_tag()
+    changed_paths = changed_paths_since(tag)
+    if tag is None:
+        return tag, changed_paths
+
+    matches = [
+        path
+        for path in changed_paths
+        if any(fnmatch.fnmatchcase(path, pattern) for pattern in service.paths)
+    ]
+    return tag, matches
+
+
+def next_release_tag() -> str:
+    release_date = dt.date.today().strftime('%Y.%m.%d')
+    base_tag = f'v{release_date}'
+    tags = set(run_git('tag', '--list', f'{base_tag}*').splitlines())
+
+    if base_tag not in tags:
+        return base_tag
+
+    suffixes: list[int] = []
+    prefix = f'{base_tag}.'
+    for tag in tags:
+        if tag.startswith(prefix):
+            suffix = tag.removeprefix(prefix)
+            if suffix.isdigit():
+                suffixes.append(int(suffix))
+
+    next_patch = (max(suffixes) + 1) if suffixes else 1
+    return f'{base_tag}.{next_patch}'
+
+
+def load_statuses() -> list[ServiceStatus]:
+    statuses: list[ServiceStatus] = []
+    for service in SERVICES:
+        latest_tag, changes = service_changes(service)
+        statuses.append(
+            ServiceStatus(
+                service=service,
+                latest_tag=latest_tag,
+                changes=changes,
+                next_tag=next_release_tag(),
+            )
+        )
+    return statuses
+
+
+class ConfirmScreen(ModalScreen[bool]):
+    def __init__(self, title: str, body: str) -> None:
+        super().__init__()
+        self.title_text = title
+        self.body = body
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id='dialog'):
+            yield Label(self.title_text, id='dialog-title')
+            yield Static(self.body)
+            with Horizontal(id='dialog-buttons'):
+                yield Button('Yes', variant='primary', id='confirm')
+                yield Button('No', id='cancel')
+
+    @on(Button.Pressed, '#confirm')
+    def confirm(self) -> None:
+        self.dismiss(True)
+
+    @on(Button.Pressed, '#cancel')
+    def cancel(self) -> None:
+        self.dismiss(False)
+
+
+class ReleaseApp(App[None]):
+    TITLE = 'Storitch release'
+    CSS = CSS
+    BINDINGS = [
+        Binding('q', 'quit', 'Quit'),
+        Binding('escape', 'quit', show=False),
+        Binding('ctrl+c', 'quit', show=False),
+        Binding('space', 'toggle_selection', 'Select'),
+        Binding('r', 'release', 'Release'),
+    ]
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.statuses: list[ServiceStatus] = []
+        self.selected: set[str] = set()
+
+    def compose(self) -> ComposeResult:
+        yield Header()
+        with Container(id='layout'):
+            yield DataTable(id='table')
+            with Horizontal(id='actions'):
+                yield Button('Release', variant='primary', id='release-button')
+                yield Static('', id='status', markup=False)
+        yield Static('esc Quit   space Select   r Release', id='footer')
+
+    def on_mount(self) -> None:
+        try:
+            fetch_tags()
+            self.reload()
+        except subprocess.CalledProcessError as exc:
+            self.show_git_error(exc)
+
+    def reload(self, *, preserve_selection: bool = False) -> None:
+        self.statuses = load_statuses()
+        if not preserve_selection:
+            self.selected = {
+                status.service.name for status in self.statuses if status.suggested
+            }
+        table = self.query_one('#table', DataTable)
+        table.clear(columns=True)
+        table.cursor_type = 'row'
+        table.add_columns('Sel', 'Service', 'Status', 'Latest tag', 'Next tag')
+
+        for status in self.statuses:
+            table.add_row(
+                self.marker(status.service.name),
+                status.service.name,
+                'suggested' if status.suggested else 'no changes',
+                status.latest_tag or '-',
+                status.next_tag,
+                key=status.service.name,
+            )
+        table.focus()
+
+    def marker(self, service_name: str) -> str:
+        return '[green]✓[/]' if service_name in self.selected else ''
+
+    def action_toggle_selection(self) -> None:
+        if not self.statuses:
+            return
+        table = self.query_one('#table', DataTable)
+        status = self.statuses[table.cursor_row]
+        if status.service.name in self.selected:
+            self.selected.remove(status.service.name)
+        else:
+            self.selected.add(status.service.name)
+        table.update_cell_at(
+            Coordinate(table.cursor_row, 0), self.marker(status.service.name)
+        )
+
+    def action_release(self) -> None:
+        try:
+            fetch_tags()
+            block_message = branch_sync_block_message(branch_sync_status())
+            if block_message is not None:
+                self.query_one('#status', Static).update(block_message)
+                return
+            self.reload(preserve_selection=bool(self.statuses))
+            commit = run_git('rev-parse', 'HEAD')
+        except subprocess.CalledProcessError as exc:
+            self.show_git_error(exc)
+            return
+
+        statuses = [
+            status for status in self.statuses if status.service.name in self.selected
+        ]
+        if not statuses:
+            self.query_one('#status', Static).update('No services selected.')
+            return
+
+        unchanged = [status.service.name for status in statuses if not status.suggested]
+        tags = [status.next_tag for status in statuses]
+        warning = ''
+        if unchanged:
+            warning = f'\n\nNo detected service changes: {", ".join(unchanged)}'
+
+        self.push_screen(
+            ConfirmScreen('Create and push tags?', '\n'.join(tags) + warning),
+            lambda confirmed: (
+                self.create_and_push_tags(tags, commit) if confirmed else None
+            ),
+        )
+
+    @on(Button.Pressed, '#release-button')
+    def release_button_pressed(self) -> None:
+        self.action_release()
+
+    def create_and_push_tags(self, tags: list[str], commit: str) -> None:
+        created: list[str] = []
+        try:
+            fetch_tags()
+            block_message = branch_sync_block_message(branch_sync_status())
+            if block_message is not None:
+                self.query_one('#status', Static).update(block_message)
+                return
+            if run_git('rev-parse', 'HEAD') != commit:
+                self.query_one('#status', Static).update(
+                    'HEAD changed. Review the release again.'
+                )
+                return
+            for tag in tags:
+                run_git('tag', tag, commit)
+                created.append(tag)
+            run_git('push', 'origin', *(f'refs/tags/{tag}' for tag in tags))
+        except subprocess.CalledProcessError as exc:
+            self.show_git_error(exc, created)
+            return
+
+        self.reload()
+        self.query_one('#status', Static).update(
+            f'Created and pushed: {", ".join(tags)}'
+        )
+
+    def show_git_error(
+        self, exc: subprocess.CalledProcessError, created: list[str] | None = None
+    ) -> None:
+        message = f'Command failed: git {" ".join(exc.cmd[1:])}'
+        if exc.stderr:
+            message += f'\n{exc.stderr.strip()}'
+        if created:
+            message += f'\nLocal tags retained: {", ".join(created)}'
+        self.query_one('#status', Static).update(message)
+
+
+if __name__ == '__main__':
+    ReleaseApp().run()
