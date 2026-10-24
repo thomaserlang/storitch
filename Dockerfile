@@ -45,7 +45,7 @@ ARG LIBJXL_VERSION=0.11.2
 
 RUN apt-get -y update && \
     apt-get -y upgrade && \
-    apt-get install -y --no-install-recommends git make pkg-config autoconf curl cmake clang libomp-dev ca-certificates automake \
+    apt-get install -y --no-install-recommends git make pkg-config autoconf curl cmake clang g++ libomp-dev ca-certificates automake \
     # libaom
     yasm \
     # libheif

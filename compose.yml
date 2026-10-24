@@ -1,8 +1,11 @@
 services:
   storitch:
     build: .
+    command: 'api'
     ports:
       - "3001:3000"
+    volumes:
+      - /tmp/storitch:/tmp/storitch
     environment:
-      - storitch__api_keys=["test"]
+      - storitch__api_keys=["test-key"]
       - storitch__debug=true

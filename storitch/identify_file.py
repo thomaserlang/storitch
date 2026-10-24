@@ -1,9 +1,11 @@
 import asyncio
 import logging
 import os.path
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 import filetype
+import pydicom
 from fastapi.concurrency import run_in_threadpool
 from filetype.types import (
     APPLICATION,
@@ -15,6 +17,8 @@ from filetype.types import (
     image,
 )
 from pydantic import TypeAdapter
+from pydicom.dataset import Dataset
+from pydicom.valuerep import format_number_as_ds
 
 from storitch import config, schemas
 from storitch.filetype_matchers import M3shapeDCM
@@ -171,12 +175,38 @@ def get_image_exif(path: Path) -> dict[str, str | int | list[str]] | None:
 
 
 def get_dicom_elements(path: Path) -> dict[str, dict] | None:
-    import pydicom
-
     try:
         with pydicom.dcmread(path, stop_before_pixels=True) as dataset:
-            ta = TypeAdapter(dict[str, dict])
-            return ta.validate_python(dataset.to_json_dict(suppress_invalid_tags=True))
+            _normalize_dicom_decimal_strings(dataset)
+            return dataset.to_json_dict(suppress_invalid_tags=True)
     except Exception as e:
         logging.exception(e)
         return None
+
+
+def _normalize_dicom_decimal_strings(dataset: Dataset) -> None:
+    """Make overlong numeric DS values valid without discarding their sequences."""
+    for element in dataset.iterall():
+        if element.VR != 'DS' or element.value is None:
+            continue
+
+        values = list(element.value) if element.VM > 1 else [element.value]
+        normalized_values = []
+        changed = False
+        for value in values:
+            value_text = str(value)
+            if len(value_text) <= 16:
+                normalized_values.append(value)
+                continue
+
+            try:
+                normalized_values.append(format_number_as_ds(Decimal(value_text)))
+            except (InvalidOperation, TypeError, ValueError):
+                normalized_values.append(value)
+                continue
+            changed = True
+
+        if changed:
+            element.value = (
+                normalized_values if element.VM > 1 else normalized_values[0]
+            )
