@@ -110,6 +110,18 @@ Or
 
 
 
+### Optional checksum
+Send `X-Checksum-CRC32C` with `X-Finished: true` to verify the whole file.
+Use padded Base64 of the four checksum bytes in big-endian order.
+For example, `123456789` has checksum `4waSgw==`.
+
+The response includes `checksum_crc32c`, which should match the sent checksum.
+A mismatch returns HTTP 422 with code `upload_checksum_mismatch` and discards the temporary upload.
+Omit the header to upload without verification.
+
+An empty final PATCH can be used if the checksum is calculated while uploading.
+Send chunks sequentially. If a request fails, restart the file in a new session.
+
 ## Development install
 
     uv sync --dev

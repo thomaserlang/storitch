@@ -1,6 +1,16 @@
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, StringConstraints
+from pydantic import Base64Bytes, BaseModel, Field, StringConstraints
+
+CRC32C = Annotated[
+    Base64Bytes,
+    Field(
+        min_length=4,
+        max_length=4,
+        # Validation uses decoded bytes; OpenAPI describes the Base64 header.
+        json_schema_extra={'minLength': 8, 'maxLength': 8},
+    ),
+]
 
 
 class Metadata(BaseModel):
@@ -14,6 +24,7 @@ FileTypes = Literal[
 
 
 class UploadResult(BaseModel):
+    checksum_crc32c: str | None = None
     file_size: int
     filename: str | None
     hash: str | None

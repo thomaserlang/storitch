@@ -61,8 +61,9 @@ async def upload_result(
 
 async def create_store_folder(file_id: str) -> Path:
     dir = get_store_folder(file_id)
-    if not dir.exists():
-        dir.mkdir(parents=True, mode=int(config.dir_mode, 8))
+    await run_in_threadpool(
+        dir.mkdir, parents=True, exist_ok=True, mode=int(config.dir_mode, 8)
+    )
     return dir
 
 

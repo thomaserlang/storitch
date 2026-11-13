@@ -16,6 +16,7 @@ dependencies = [
     "highdicom[libjpeg]>=0.26.1",
     "sentry-sdk>=2.39.0",
     "pyvips[binary]>=3.1.1",
+    "google-crc32c>=1.9.0",
 ]
 requires-python = ">=3.13"
 

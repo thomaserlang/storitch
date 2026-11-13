@@ -1,6 +1,8 @@
 import hashlib
 from pathlib import Path
 
+import google_crc32c
+
 
 def path_from_file_id(hash_: str, levels: int = 2, length: int = 2) -> Path:
     """
@@ -41,6 +43,13 @@ def path_from_file_id(hash_: str, levels: int = 2, length: int = 2) -> Path:
     return Path(*path)
 
 
-def file_sha256(path: Path) -> str:
-    with open(path, 'rb') as f:
-        return hashlib.file_digest(f, 'sha256').hexdigest()
+def file_checksums(path: Path, *, crc32c: bool = False) -> tuple[str, bytes | None]:
+    """Calculate the requested checksums in one file read."""
+    sha = hashlib.sha256()
+    crc = google_crc32c.Checksum() if crc32c else None
+    with path.open('rb') as source:
+        while chunk := source.read(1024 * 1024):
+            sha.update(chunk)
+            if crc is not None:
+                crc.update(chunk)
+    return sha.hexdigest(), crc.digest() if crc is not None else None

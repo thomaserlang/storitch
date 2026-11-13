@@ -1,3 +1,4 @@
+import base64
 import json
 import shutil
 import uuid
@@ -37,6 +38,10 @@ async def session_upload_start_route(
     | None = None,
     x_filename: Annotated[str, Header(description='Filename (unicode escaped)')] = '',
     x_finished: Annotated[bool, Header(description='Finished uploading')] = True,
+    x_checksum_crc32c: Annotated[
+        schemas.CRC32C | None,
+        Header(description='Base64 whole-file CRC32C; final request only'),
+    ] = None,
 ) -> schemas.UploadResult | schemas.SessionResult:
     x_filename = x_filename.encode().decode('unicode-escape')
     if x_storitch:
@@ -56,7 +61,9 @@ async def session_upload_start_route(
             raise RequestValidationError(e.errors()) from e
 
     session = str(uuid.uuid4())
-    return await save(request, session, info.filename, info.finished, True)
+    return await save(
+        request, session, info.filename, info.finished, True, x_checksum_crc32c
+    )
 
 
 @router.patch(
@@ -77,6 +84,10 @@ async def session_upload_append_route(
     x_filename: Annotated[str, Header(description='Filename (unicode escaped)')] = '',
     x_session: Annotated[str, Header(description='Upload Session ID')] = '',
     x_finished: Annotated[bool, Header(description='Finished uploading')] = True,
+    x_checksum_crc32c: Annotated[
+        schemas.CRC32C | None,
+        Header(description='Base64 whole-file CRC32C; final request only'),
+    ] = None,
 ) -> schemas.UploadResult | schemas.SessionResult:
     x_filename = x_filename.encode().decode('unicode-escape')
     if x_storitch:
@@ -96,12 +107,21 @@ async def session_upload_append_route(
         except ValidationError as e:
             raise RequestValidationError(e.errors()) from e
 
-    return await save(request, info.session, info.filename, info.finished, False)
+    return await save(
+        request, info.session, info.filename, info.finished, False, x_checksum_crc32c
+    )
 
 
 async def save(
-    request: Request, session: str, filename: str, finished: bool, new: bool
+    request: Request,
+    session: str,
+    filename: str,
+    finished: bool,
+    new: bool,
+    expected_crc32c: bytes | None = None,
 ) -> schemas.UploadResult | schemas.SessionResult:
+    if expected_crc32c is not None and not finished:
+        raise HTTPException(422, 'X-Checksum-CRC32C is only valid on the final request')
     temp_path = Path(config.temp_path) / session
     if not new and not temp_path.exists():
         raise HTTPException(status_code=400, detail='Upload session not found')
@@ -109,14 +129,22 @@ async def save(
         async for chunk in request.stream():
             await f.write(chunk)
     if finished:
-        hash_ = await run_in_threadpool(utils.file_sha256, temp_path)
+        hash_, crc = await run_in_threadpool(
+            utils.file_checksums, temp_path, crc32c=expected_crc32c is not None
+        )
+        if expected_crc32c is not None and crc != expected_crc32c:
+            await run_in_threadpool(temp_path.unlink)
+            raise HTTPException(422, detail={'code': 'upload_checksum_mismatch'})
         file_id = hash_ if config.deduplication else str(uuid.uuid4())
         path = await create_store_folder(file_id) / file_id
         if config.deduplication and path.exists():
             temp_path.unlink()
-            return await upload_result(file_id=file_id, hash_=hash_, filename=filename)
-        await run_in_threadpool(shutil.move, temp_path, path)
-        path.chmod(int(config.file_mode, 8))
-        return await upload_result(file_id=file_id, hash_=hash_, filename=filename)
+        else:
+            await run_in_threadpool(shutil.move, temp_path, path)
+            path.chmod(int(config.file_mode, 8))
+        result = await upload_result(file_id=file_id, hash_=hash_, filename=filename)
+        if crc is not None:
+            result.checksum_crc32c = base64.b64encode(crc).decode('ascii')
+        return result
 
     return schemas.SessionResult(session=session)
