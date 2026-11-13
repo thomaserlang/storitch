@@ -17,11 +17,11 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 FROM python:3.14-slim-trixie
 
 # ImageMagick (https://github.com/dooman87/imagemagick-docker)
-ARG IM_VERSION=7.1.2-34
-ARG LIB_HEIF_VERSION=1.23.6
-ARG LIB_AOM_VERSION=3.15.2
+ARG IM_VERSION=7.1.2-35
+ARG LIB_HEIF_VERSION=1.23.7
+ARG LIB_AOM_VERSION=3.15.3
 ARG LIB_WEBP_VERSION=1.6.0
-ARG LIBJXL_VERSION=0.12.0
+ARG LIBJXL_VERSION=0.13.0
 
 RUN apt-get -y update && \
     apt-get -y upgrade && \
