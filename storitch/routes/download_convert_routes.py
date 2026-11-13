@@ -1,21 +1,19 @@
 import asyncio
 import logging
-import os
 import re
 import time
-from collections.abc import AsyncGenerator
 from mimetypes import guess_type
 from pathlib import Path
 from typing import Annotated, Any
 
 import pyvips
-from aiofile import async_open
-from fastapi import APIRouter, HTTPException, Request, status
-from fastapi.concurrency import run_in_threadpool
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi import APIRouter, HTTPException
+from fastapi.concurrency import contextmanager_in_threadpool, run_in_threadpool
+from fastapi.responses import FileResponse
 from pydantic import StringConstraints
 
 from storitch import config, store_file
+from storitch.atomic_output import atomic_output
 from storitch.ignore_errors import ignore_error
 
 pyvips.cache_set_max(0)
@@ -60,13 +58,12 @@ it to a PNG file.
 )
 @router.head('/{file_id}', description=description)
 @router.head('/{file_id}/{filename}', description=description)
-async def download_route(  # noqa: ANN201
+async def download_route(
     file_id: Annotated[
         str, StringConstraints(pattern=r'[a-zA-Z0-9-]+(@[a-zA-Z0-9_\-.]+)?')
     ],
-    request: Request,
     filename: str | None = None,
-):
+) -> FileResponse:
     path = store_file.get_file_path(file_id)
     if '@' in file_id:
         converted = await convert(path)
@@ -75,25 +72,22 @@ async def download_route(  # noqa: ANN201
         path = converted
 
     try:
-        stat_result = path.stat()
+        stat_result = await run_in_threadpool(path.stat)
         media_type = guess_type(filename or file_id)[0] or 'application/octet-stream'
 
-        if request.method == 'HEAD':
-            return FileResponse(
-                path,
-                status_code=200,
-                media_type=media_type,
-                filename=filename,
-                stat_result=stat_result,
-                content_disposition_type=config.content_disposition_type,
-            )
-
-        return range_requests_response(
-            request=request,
-            path=path,
+        return FileResponse(
+            path,
             filename=filename or file_id,
             media_type=media_type,
             stat_result=stat_result,
+            content_disposition_type=config.content_disposition_type,
+            headers={
+                'content-encoding': 'identity',
+                'access-control-expose-headers': (
+                    'content-type, accept-ranges, content-length, '
+                    'content-range, content-encoding'
+                ),
+            },
         )
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail='Not found') from e
@@ -126,33 +120,28 @@ async def convert(path: Path) -> Path | None:
     size = _get_size(p[1], args)
     save_path = Path(f'{p[0]}@{size}{"." if ext else ""}{ext}')
 
-    if save_path.exists():
+    if await run_in_threadpool(save_path.exists):
         return save_path
 
     start_time = time.time()
     try:
-        try:
-            await run_in_threadpool(vips_convert, p[0], str(save_path), args)
-        except pyvips.Error as e:
-            if save_path.exists():
-                logging.info(
-                    'Possible race condition, file was created during '
-                    'conversion failure, returning file'
-                )
-                return save_path
-            if config.allow_imagemagick_fallback:
+        async with contextmanager_in_threadpool(
+            atomic_output(save_path)
+        ) as temporary_path:
+            try:
+                await run_in_threadpool(vips_convert, p[0], str(temporary_path), args)
+            except pyvips.Error:
+                if not config.allow_imagemagick_fallback:
+                    raise
                 logging.info(
                     f'{path}: vips conversion failed, falling back to ImageMagick'
                 )
-                await imagemagick_convert(p[0], str(save_path), args)
-            else:
-                raise e
+                await imagemagick_convert(p[0], str(temporary_path), args)
         execution_time = time.time() - start_time
         logging.info(f'{path}: converted ({execution_time:.3f}s)')
-        save_path.chmod(int(config.file_mode, 8))
         return save_path
     except Exception as e:
-        if save_path.exists():
+        if await run_in_threadpool(save_path.exists):
             logging.info(
                 'Possible race condition, file was created during '
                 'conversion failure, returning file'
@@ -205,7 +194,7 @@ async def imagemagick_convert(path: str, save_path: str, args: dict[str, int]) -
         stderr=asyncio.subprocess.PIPE,
     )
     _, error = await p.communicate()
-    if error and not ignore_error(error.decode()):
+    if p.returncode or (error and not ignore_error(error.decode())):
         raise Exception(f'ImageMagick conversion failed: {error.decode()}')
 
     return save_path
@@ -223,76 +212,6 @@ def _get_size(arguments: str, convert_args: dict[str, int]) -> str:
             convert_args['height'] = int(size_match.group(2))
             return f'SY{size_match.group(2)}'
     return ''
-
-
-def range_requests_response(
-    request: Request,
-    path: Path,
-    filename: str,
-    media_type: str,
-    stat_result: os.stat_result,
-) -> StreamingResponse:
-    """Returns StreamingResponse using Range Requests of a given file"""
-
-    file_size = stat_result.st_size
-    range_header = request.headers.get('range')
-
-    f = FileResponse(
-        path=path,
-        stat_result=stat_result,
-        filename=filename,
-        media_type=media_type,
-        content_disposition_type=config.content_disposition_type,
-    )
-    headers = f.headers
-    headers['accept-ranges'] = 'bytes'
-    headers['content-encoding'] = 'identity'
-    headers['access-control-expose-headers'] = (
-        'content-type, accept-ranges, content-length, content-range, content-encoding'
-    )
-    start = 0
-    end = file_size - 1
-    status_code = status.HTTP_200_OK
-
-    if range_header is not None and range_header != '':
-        start, end = _get_range_header(range_header, file_size)
-        size = end - start + 1
-        headers['content-length'] = str(size)
-        headers['content-range'] = f'bytes {start}-{end}/{file_size}'
-        status_code = status.HTTP_206_PARTIAL_CONTENT
-
-    return StreamingResponse(
-        _send_bytes(path, start, end),
-        headers=headers,
-        status_code=status_code,
-    )
-
-
-def _get_range_header(range_header: str, file_size: int) -> tuple[int, int]:
-    def _invalid_range() -> HTTPException:
-        return HTTPException(
-            status.HTTP_416_REQUESTED_RANGE_NOT_SATISFIABLE,
-            detail=f'Invalid request range (Range:{range_header!r})',
-        )
-
-    try:
-        h = range_header.replace('bytes=', '').split('-')
-        start = int(h[0]) if h[0] != '' else 0
-        end = int(h[1]) if h[1] != '' else file_size - 1
-    except ValueError as e:
-        raise _invalid_range() from e
-
-    if start > end or start < 0 or end > file_size - 1:
-        raise _invalid_range()
-    return start, end
-
-
-async def _send_bytes(path: Path, start: int, end: int) -> AsyncGenerator[bytes]:
-    async with async_open(path, mode='rb') as f:
-        f.seek(start)
-        while (pos := f.tell()) <= end:
-            read_size = min(FileResponse.chunk_size, end + 1 - pos)
-            yield await f.read(read_size)
 
 
 def is_allowed_resize_size(size: int) -> bool:

@@ -8,7 +8,7 @@ from highdicom.io import ImageFileReader
 from pydicom.filereader import read_file_meta_info
 from pydicom.uid import UID
 
-from storitch import config
+from storitch.atomic_output import atomic_output
 
 _CACHE_SUFFIX = '@DICOM_FRAME_INDEX'
 DICOM_FRAME_INDEX_LOCK_SUFFIX = '.DICOM_FRAME_INDEX_LOCK'
@@ -122,14 +122,14 @@ def _read_index(path: Path) -> NativeDicomFrameIndex | None:
 
 
 def _write_index(path: Path, index: NativeDicomFrameIndex) -> None:
-    path.write_text(
-        '\n'.join(
-            (
-                index.transfer_syntax_uid,
-                str(index.first_frame_offset),
-                str(index.bytes_per_frame),
-                str(index.number_of_frames),
+    with atomic_output(path) as temporary_path:
+        temporary_path.write_text(
+            '\n'.join(
+                (
+                    index.transfer_syntax_uid,
+                    str(index.first_frame_offset),
+                    str(index.bytes_per_frame),
+                    str(index.number_of_frames),
+                )
             )
         )
-    )
-    path.chmod(int(config.file_mode, 8))

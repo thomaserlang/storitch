@@ -43,6 +43,12 @@ def test_thumbnail() -> None:
         with Image.open(io.BytesIO(response.content)) as image:
             assert image.format == 'WEBP', image.format
 
+        response = client.get(f'/{data[0]["file_id"]}@SX2')
+        assert response.status_code == 200, response.text
+        with Image.open(io.BytesIO(response.content)) as image:
+            assert image.format == 'PNG', image.format
+            assert image.width == 2, image.width
+
         response = client.get(
             f'/{data[0]["file_id"]}@.ps',
         )

@@ -9,6 +9,7 @@ from storitch import config
 
 from .routes import (
     dicom_frames_routes,
+    dicom_thumbnail_routes,
     download_convert_routes,
     file_info_routes,
     health_routes,
@@ -29,6 +30,7 @@ app.include_router(session_routes.router)
 app.include_router(health_routes.router)
 app.include_router(download_convert_routes.router)
 app.include_router(dicom_frames_routes.router)
+app.include_router(dicom_thumbnail_routes.router)
 app.include_router(file_info_routes.router)
 
 

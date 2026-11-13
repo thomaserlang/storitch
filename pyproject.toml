@@ -12,6 +12,7 @@ dependencies = [
     "pydantic-settings>=2.11.0",
     "pillow>=11.3.0",
     "pydicom>=3.0.1",
+    "numpy>=2.0",
     "filetype>=1.2.0",
     "highdicom[libjpeg]>=0.26.1",
     "sentry-sdk>=2.39.0",
